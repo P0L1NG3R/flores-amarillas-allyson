@@ -366,100 +366,94 @@
     blending: THREE.AdditiveBlending, depthWrite: false
   }));
   glow.position.z = -1.4;
-  glow.scale.set(8.2, 8.2, 1);
-  glow.material.opacity = 0.22;
+  glow.scale.set(MOBILE ? 6.2 : 6.8, MOBILE ? 6.2 : 6.8, 1);
+  glow.material.opacity = MOBILE ? 0.095 : 0.11;
   universe.add(glow);
 
-  /* Holograma central mejorado */
-  const ambientLight = new THREE.AmbientLight(0xffefbc, 0.42);
+  /* Centro floral: reemplaza por completo el holograma circular. */
+  const ambientLight = new THREE.AmbientLight(0xffefc5, MOBILE ? 0.34 : 0.40);
   scene.add(ambientLight);
-  const holoLight = new THREE.PointLight(0xffd33d, 2.15, 28, 2);
-  holoLight.position.set(0, 0.5, 4);
-  scene.add(holoLight);
 
-  const holoCore = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(MOBILE ? 0.48 : 0.56, 2),
+  const bloomLight = new THREE.PointLight(0xffcc35, MOBILE ? 1.0 : 1.35, 15, 2);
+  bloomLight.position.set(0, 0.4, 3.0);
+  scene.add(bloomLight);
+
+  const centralBloom = new THREE.Group();
+  centralBloom.position.set(0, 0.18, 0.16);
+  universe.add(centralBloom);
+
+  const bloomGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(),
+    color: 0xffc928,
+    transparent: true,
+    opacity: 0.16,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  bloomGlow.position.z = -0.28;
+  bloomGlow.scale.set(MOBILE ? 3.0 : 3.45, MOBILE ? 3.0 : 3.45, 1);
+  centralBloom.add(bloomGlow);
+
+  const petalGeo = new THREE.SphereGeometry(0.5, MOBILE ? 8 : 10, MOBILE ? 5 : 7);
+  const bloomPetals = [];
+
+  function addPetalRing(count, radius, scaleX, scaleY, scaleZ, zBase, colorA, colorB, offset = 0) {
+    for (let i = 0; i < count; i++) {
+      const angle = i / count * Math.PI * 2 + offset;
+      const material = new THREE.MeshPhongMaterial({
+        color: i % 2 ? colorA : colorB,
+        emissive: 0x9b6100,
+        emissiveIntensity: 0.13,
+        shininess: 82,
+        transparent: true,
+        opacity: 0.96
+      });
+      const petal = new THREE.Mesh(petalGeo, material);
+      petal.scale.set(scaleX, scaleY, scaleZ);
+      petal.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, zBase + Math.sin(angle * 2) * 0.025);
+      petal.rotation.z = angle - Math.PI / 2;
+      petal.rotation.x = 0.10 + Math.sin(angle) * 0.08;
+      centralBloom.add(petal);
+      bloomPetals.push({
+        petal,
+        angle,
+        radius,
+        baseX: scaleX,
+        baseY: scaleY,
+        baseZ: scaleZ,
+        phase: i * 0.53 + offset
+      });
+    }
+  }
+
+  addPetalRing(MOBILE ? 9 : 12, MOBILE ? 0.62 : 0.69, MOBILE ? 0.19 : 0.20, MOBILE ? 0.62 : 0.72, 0.075, -0.04, 0xffc51f, 0xffdf55, 0);
+  addPetalRing(MOBILE ? 7 : 10, MOBILE ? 0.46 : 0.51, MOBILE ? 0.18 : 0.19, MOBILE ? 0.50 : 0.58, 0.082, 0.08, 0xffb611, 0xffd23a, Math.PI / (MOBILE ? 7 : 10));
+
+  const bloomCenter = new THREE.Mesh(
+    new THREE.SphereGeometry(MOBILE ? 0.34 : 0.39, MOBILE ? 14 : 18, MOBILE ? 10 : 14),
     new THREE.MeshPhongMaterial({
-      color: 0xffd84a,
-      emissive: 0xf6b200,
-      emissiveIntensity: 1.25,
+      color: 0x5b3306,
+      emissive: 0x241202,
+      emissiveIntensity: 0.34,
+      shininess: 58,
       transparent: true,
-      opacity: 0.26,
-      shininess: 110
+      opacity: 1
     })
   );
-  holoCore.position.set(0, 0.22, 0.08);
-  universe.add(holoCore);
+  bloomCenter.scale.z = 0.58;
+  bloomCenter.position.z = 0.21;
+  centralBloom.add(bloomCenter);
 
-  const holoShell = new THREE.Mesh(
-    new THREE.SphereGeometry(MOBILE ? 0.76 : 0.88, MOBILE ? 16 : 26, MOBILE ? 16 : 26),
-    new THREE.MeshPhongMaterial({
-      color: 0xffefb0,
-      emissive: 0xffd84a,
-      emissiveIntensity: 0.45,
-      transparent: true,
-      opacity: 0.065,
-      side: THREE.DoubleSide
-    })
-  );
-  holoShell.position.copy(holoCore.position);
-  universe.add(holoShell);
-
-  const holoRing1 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.05, 0.016, 8, MOBILE ? 64 : 120),
-    new THREE.MeshBasicMaterial({color:0xffdb4e,transparent:true,opacity:.48,blending:THREE.AdditiveBlending,depthWrite:false})
-  );
-  holoRing1.rotation.x = 1.18;
-  holoRing1.position.y = 0.16;
-  universe.add(holoRing1);
-
-  const holoRing2 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.38, 0.012, 8, MOBILE ? 64 : 120),
-    new THREE.MeshBasicMaterial({color:0xffc423,transparent:true,opacity:.30,blending:THREE.AdditiveBlending,depthWrite:false})
-  );
-  holoRing2.rotation.x = 0.56;
-  holoRing2.rotation.y = 0.92;
-  holoRing2.position.y = 0.18;
-  universe.add(holoRing2);
-
-  const holoRing3 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.68, 0.009, 8, MOBILE ? 64 : 120),
-    new THREE.MeshBasicMaterial({color:0xffef9a,transparent:true,opacity:.19,blending:THREE.AdditiveBlending,depthWrite:false})
-  );
-  holoRing3.rotation.x = 1.5;
-  holoRing3.rotation.z = 0.42;
-  holoRing3.position.y = 0.18;
-  universe.add(holoRing3);
-
-  const holoBeam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, MOBILE ? 0.92 : 1.08, 3.4, 48, 1, true),
-    new THREE.MeshBasicMaterial({
-      color:0xffd84d,
-      transparent:true,
-      opacity:.035,
-      side:THREE.DoubleSide,
-      blending:THREE.AdditiveBlending,
-      depthWrite:false
-    })
-  );
-  holoBeam.position.y = -0.55;
-  universe.add(holoBeam);
-
-  const pedestal1 = new THREE.Mesh(
-    new THREE.TorusGeometry(MOBILE ? 0.9 : 1.05, 0.022, 8, MOBILE ? 64 : 120),
-    new THREE.MeshBasicMaterial({color:0xffd84d,transparent:true,opacity:.46,blending:THREE.AdditiveBlending})
-  );
-  pedestal1.rotation.x = Math.PI / 2;
-  pedestal1.position.y = -2.25;
-  universe.add(pedestal1);
-
-  const pedestal2 = new THREE.Mesh(
-    new THREE.TorusGeometry(MOBILE ? 1.22 : 1.42, 0.011, 8, MOBILE ? 64 : 120),
-    new THREE.MeshBasicMaterial({color:0xffb900,transparent:true,opacity:.23,blending:THREE.AdditiveBlending})
-  );
-  pedestal2.rotation.x = Math.PI / 2;
-  pedestal2.position.y = -2.25;
-  universe.add(pedestal2);
+  const seedCount = MOBILE ? 34 : 52;
+  const seedGeo = new THREE.SphereGeometry(MOBILE ? 0.018 : 0.021, 5, 4);
+  const seedMaterial = new THREE.MeshBasicMaterial({color:0xd89b20,transparent:true,opacity:1});
+  for (let i = 0; i < seedCount; i++) {
+    const a = i * 2.399963229728653;
+    const r = Math.sqrt(i / seedCount) * (MOBILE ? 0.27 : 0.31);
+    const seed = new THREE.Mesh(seedGeo, seedMaterial);
+    seed.position.set(Math.cos(a) * r, Math.sin(a) * r, 0.405 - r * 0.11);
+    centralBloom.add(seed);
+  }
 
   const PARTICLES = MOBILE ? (LOW_MEMORY ? 720 : 1050) : 3200;
 
@@ -603,7 +597,7 @@
   }));
   universe.add(morph);
 
-  function flowerTexture() {
+  function sunflowerTexture() {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const x = c.getContext("2d");
@@ -649,24 +643,75 @@
     return t;
   }
 
-  const flowerTex = flowerTexture();
+  function yellowFlowerTexture() {
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const x = c.getContext("2d");
+    x.translate(128,128);
+    x.shadowColor = "rgba(255,210,55,.42)";
+    x.shadowBlur = 10;
+
+    for (let ring = 0; ring < 2; ring++) {
+      const count = ring === 0 ? 11 : 9;
+      for (let i = 0; i < count; i++) {
+        x.save();
+        x.rotate(i / count * Math.PI * 2 + (ring ? .20 : 0));
+        const g = x.createLinearGradient(0,-10,0,-92);
+        g.addColorStop(0, ring ? "#ffc31e" : "#ffd332");
+        g.addColorStop(.62, ring ? "#ffdd58" : "#ffe777");
+        g.addColorStop(1, "#fff4b7");
+        x.fillStyle = g;
+        x.beginPath();
+        x.ellipse(0, ring ? -49 : -60, ring ? 17 : 15, ring ? 35 : 43, 0, 0, Math.PI*2);
+        x.fill();
+        x.restore();
+      }
+    }
+
+    x.shadowBlur = 0;
+    const g = x.createRadialGradient(-5,-6,2,0,0,33);
+    g.addColorStop(0,"#d38d16");
+    g.addColorStop(.7,"#9a5c0a");
+    g.addColorStop(1,"#603405");
+    x.fillStyle=g;
+    x.beginPath();x.arc(0,0,32,0,Math.PI*2);x.fill();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const sunflowerTex = sunflowerTexture();
+  const yellowFlowerTex = yellowFlowerTexture();
   const flowerGroup = new THREE.Group();
   universe.add(flowerGroup);
   const floatingFlowers = [];
-  for (let i = 0; i < (MOBILE ? (LOW_MEMORY ? 5 : 7) : 18); i++) {
+
+  // Una flor decorativa entre cada foto: foto -> flor -> foto -> girasol.
+  const floatingCount = SCENE_PHOTOS.length;
+  for (let i = 0; i < floatingCount; i++) {
+    const isSunflower = i % 2 === 1;
     const material = new THREE.SpriteMaterial({
-      map:flowerTex,transparent:true,depthWrite:false,
-      opacity:MOBILE ? .76 : .84
+      map: isSunflower ? sunflowerTex : yellowFlowerTex,
+      transparent: true,
+      depthWrite: false,
+      opacity: MOBILE ? 0.78 : 0.88
     });
     const s = new THREE.Sprite(material);
-    const a = Math.random()*Math.PI*2;
-    const r = (MOBILE ? 3.7 : 3.2) + Math.random()*(MOBILE ? 3.2 : 4.8);
-    const y = -1.45 + Math.random()*4.55;
-    const sc = (MOBILE ? .30 : .33) + Math.random()*(MOBILE ? .30 : .42);
-    s.position.set(Math.cos(a)*r, y, (Math.random()-.5)*(MOBILE ? 4.6 : 6.4));
+    const a = ((i + 0.5) / floatingCount) * Math.PI * 2 + 0.25;
+    const r = (MOBILE ? 3.55 : 3.6) + (i % 2) * (MOBILE ? 0.72 : 1.05);
+    const y = -1.10 + (i % 5) * (MOBILE ? 0.64 : 0.70);
+    const sc = isSunflower
+      ? (MOBILE ? 0.37 : 0.48)
+      : (MOBILE ? 0.30 : 0.38);
+
+    s.position.set(Math.cos(a)*r, y, Math.sin(a)*r*.72);
     s.scale.set(sc,sc,1);
     flowerGroup.add(s);
-    floatingFlowers.push({s,y,baseScale:sc,phase:Math.random()*7,speed:.18+Math.random()*.28});
+    floatingFlowers.push({
+      s,y,baseScale:sc,baseX:s.position.x,baseZ:s.position.z,
+      phase:i*.91,speed:.13+Math.random()*.12,isSunflower
+    });
   }
 
 
@@ -766,15 +811,6 @@
     photoGroup.add(card);
     photoData.push({card,y,phase:i*.8});
   }));
-
-  const spiralPts=[];
-  const spiralN=MOBILE?(LOW_MEMORY?320:520):1900;
-  for(let i=0;i<spiralN;i++){
-    const u=i/spiralN,t=u*Math.PI*21,r=.06+u*5;
-    spiralPts.push([Math.cos(t)*r,-2.42+(Math.random()-.5)*.07,Math.sin(t)*r*.68]);
-  }
-  const spiral=pointsObject(spiralPts,.029,0xffc820,.7);
-  universe.add(spiral);
 
   let shapeIndex=0,nextShape=1;
   const HOLD=3300, MORPH=2100;
@@ -883,48 +919,74 @@
       }
       if(!storyPaused && local>HOLD){
         const q=smooth(Math.min(1,(local-HOLD)/MORPH));
+        const breathe=Math.sin(q*Math.PI);
         const from=targets[shapeIndex],to=targets[nextShape],pos=morph.geometry.attributes.position.array;
         for(let i=0;i<PARTICLES;i++){
           const j=i*3;
-          pos[j]=from[i][0]+(to[i][0]-from[i][0])*q;
-          pos[j+1]=from[i][1]+(to[i][1]-from[i][1])*q;
-          pos[j+2]=from[i][2]+(to[i][2]-from[i][2])*q;
+          const mx=from[i][0]+(to[i][0]-from[i][0])*q;
+          const my=from[i][1]+(to[i][1]-from[i][1])*q;
+          const mz=from[i][2]+(to[i][2]-from[i][2])*q;
+          const len=Math.hypot(mx,my)||1;
+          const spread=breathe*(0.10+(i%7)*0.006);
+          pos[j]=mx+(mx/len)*spread;
+          pos[j+1]=my+(my/len)*spread;
+          pos[j+2]=mz+breathe*Math.sin(i*1.73)*0.045;
         }
         morph.geometry.attributes.position.needsUpdate=true;
       }
     }
 
-    if(burst>0){burst*=.92;morph.scale.setScalar(1+burst*.32);glow.material.opacity=.23+burst*.24}
-    else{morph.scale.setScalar(1+Math.sin(t*2.0)*.02);glow.material.opacity=.19+Math.sin(t*1.3)*.035}
+    const phaseLocal=now-morphStart;
+    const transitionQ=phaseLocal>HOLD ? smooth(Math.min(1,(phaseLocal-HOLD)/MORPH)) : 0;
+    const flowerVisibility=
+      shapeIndex===0 ? 1-transitionQ :
+      nextShape===0 ? transitionQ : 0;
 
-    morph.rotation.y=Math.sin(t*.45)*.15;
-    farStars.rotation.y=t*.006;
-    nearStars.rotation.y=-t*.013;
-    spiral.rotation.y=t*.11;
-    glow.scale.setScalar(8.1+Math.sin(t*.9)*.28);
+    // La flor abre y respira; durante el morph sus petalos parecen soltarse hacia las particulas.
+    const bloomBreath=REDUCED_MOTION?1:1+Math.sin(t*1.25)*0.018;
+    centralBloom.visible=flowerVisibility>0.012;
+    centralBloom.scale.setScalar(bloomBreath*(0.58+flowerVisibility*0.42));
+    centralBloom.position.y=0.18+(REDUCED_MOTION?0:Math.sin(t*.86)*0.025);
+    bloomGlow.material.opacity=(0.05+flowerVisibility*0.13)+(REDUCED_MOTION?0:Math.sin(t*1.1)*0.012);
+    bloomLight.intensity=(MOBILE?0.72:0.94)+flowerVisibility*(MOBILE?0.38:0.52);
+    bloomCenter.material.emissiveIntensity=0.20+flowerVisibility*0.24;
+    bloomCenter.material.opacity=0.08+flowerVisibility*0.92;
+    seedMaterial.opacity=0.05+flowerVisibility*0.95;
 
-    holoCore.rotation.x += .008;
-    holoCore.rotation.y += .011;
-    holoShell.rotation.x -= .0025;
-    holoShell.rotation.y += .0035;
-    holoRing1.rotation.z += .012;
-    holoRing2.rotation.z -= .009;
-    holoRing3.rotation.y += .006;
-    holoRing3.rotation.z += .004;
-    pedestal1.rotation.z += .0045;
-    pedestal2.rotation.z -= .0032;
-    holoCore.material.emissiveIntensity = 1.05 + (Math.sin(t*2.3)+1)*.18;
-    holoShell.material.opacity = .055 + (Math.sin(t*1.7)+1)*.012;
-    holoBeam.material.opacity = .026 + (Math.sin(t*1.15)+1)*.012;
+    bloomPetals.forEach((o,i)=>{
+      const open=0.91+flowerVisibility*0.09;
+      const drift=(1-flowerVisibility)*0.22;
+      const wobble=REDUCED_MOTION?0:Math.sin(t*.7+o.phase)*0.018;
+      const radius=o.radius*open+drift;
+      o.petal.position.x=Math.cos(o.angle)*radius;
+      o.petal.position.y=Math.sin(o.angle)*radius+wobble;
+      o.petal.position.z=(i%2?0.04:-0.02)+(1-flowerVisibility)*0.05;
+      o.petal.scale.set(o.baseX*(.96+flowerVisibility*.04),o.baseY*(.93+flowerVisibility*.07),o.baseZ);
+      o.petal.material.opacity=0.12+flowerVisibility*0.84;
+      o.petal.rotation.x=0.10+Math.sin(o.angle)*0.08+(REDUCED_MOTION?0:Math.sin(t*.55+o.phase)*0.018);
+    });
+
+    if(burst>0){burst*=.92;morph.scale.setScalar(1+burst*.24);glow.material.opacity=.14+burst*.16}
+    else{morph.scale.setScalar(1+(REDUCED_MOTION?0:Math.sin(t*1.55)*.012));glow.material.opacity=.105+(REDUCED_MOTION?0:Math.sin(t*.9)*.018)}
+
+    // Sin efecto planeta: solo una inclinacion casi imperceptible.
+    morph.rotation.y=REDUCED_MOTION?0:Math.sin(t*.20)*.035;
+    morph.rotation.x=REDUCED_MOTION?0:Math.sin(t*.17)*.012;
+    farStars.rotation.y=REDUCED_MOTION?0:t*.003;
+    nearStars.rotation.y=REDUCED_MOTION?0:-t*.005;
+    glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
 
     if(secretPulse>0) secretPulse*=.91;
     floatingFlowers.forEach(o=>{
-      const lift = REDUCED_MOTION ? 0 : Math.sin(t*o.speed+o.phase)*.10;
+      const lift=REDUCED_MOTION?0:Math.sin(t*o.speed+o.phase)*.075;
+      const sway=REDUCED_MOTION?0:Math.sin(t*.11+o.phase)*.035;
       o.s.position.y=o.y+lift;
-      o.s.material.rotation=REDUCED_MOTION ? 0 : Math.sin(t*.22+o.phase)*.055;
-      const pulse = secretPulse>0 ? 1 + secretPulse*.34 : 1;
-      o.s.scale.setScalar(o.baseScale * pulse);
-      if(secretPulse>0) o.s.material.opacity=Math.min(1,.78+secretPulse*.20);
+      o.s.position.x=o.baseX+sway;
+      o.s.position.z=o.baseZ+(REDUCED_MOTION?0:Math.cos(t*.10+o.phase)*.025);
+      o.s.material.rotation=REDUCED_MOTION?0:Math.sin(t*.16+o.phase)*.032;
+      const pulse=secretPulse>0?1+secretPulse*.28:1;
+      o.s.scale.setScalar(o.baseScale*pulse);
+      o.s.material.opacity=Math.min(1,(MOBILE?.78:.88)+(secretPulse>0?secretPulse*.14:0));
     });
     phraseData.forEach(o=>{
       o.s.position.y=o.y+Math.sin(t*.42+o.phase)*.045;
