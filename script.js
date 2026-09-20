@@ -812,23 +812,26 @@
   universe.add(phraseGroup);
   const phraseData = [];
 
-  PHRASES.forEach((txt,i) => {
-    if (MOBILE && i % 3 !== 0) return;
+  // Menos etiquetas simultaneas: dejan respirar a las fotos y a las flores 3D.
+  const visiblePhrases = PHRASES.filter((_,i) =>
+    MOBILE ? i % 4 === 0 : i % 3 !== 2
+  );
+
+  visiblePhrases.forEach((txt,i) => {
     const {tex,ratio} = textTexture(txt);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({
-      map:tex,transparent:true,depthWrite:false,opacity:.91
+      map:tex,transparent:true,depthWrite:false,opacity:MOBILE?.70:.76
     }));
-    const visibleIndex = MOBILE ? Math.floor(i/3) : i;
-    const total = MOBILE ? Math.ceil(PHRASES.length/3) : PHRASES.length;
-    const a = visibleIndex/total*Math.PI*2 + visibleIndex*.21;
-    const r = (MOBILE ? 4.35 : 4.55) + (visibleIndex%3)*(MOBILE ? .82 : 1.08);
-    const yBands = MOBILE ? [-1.25,-.35,.55,1.45,2.25] : [-1.35,-.62,.12,.86,1.6,2.28];
-    const y = yBands[visibleIndex % yBands.length];
-    const h = MOBILE ? .235 : .285;
+    const total=visiblePhrases.length;
+    const a=i/total*Math.PI*2+i*.24;
+    const r=(MOBILE?4.55:4.75)+(i%3)*(MOBILE?.70:.94);
+    const yBands=MOBILE?[-1.15,.10,1.35]:[-1.30,-.50,.30,1.10,1.90];
+    const y=yBands[i%yBands.length];
+    const h=MOBILE?.205:.245;
     s.scale.set(h*ratio,h,1);
-    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.68);
+    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.66);
     phraseGroup.add(s);
-    phraseData.push({s,y,phase:visibleIndex*.83,baseX:s.position.x,baseZ:s.position.z});
+    phraseData.push({s,y,phase:i*.91,baseX:s.position.x,baseZ:s.position.z});
   });
 
   const photoGroup = new THREE.Group();
