@@ -266,6 +266,97 @@
   glow.material.opacity = 0.22;
   universe.add(glow);
 
+  /* Holograma central mejorado */
+  const ambientLight = new THREE.AmbientLight(0xffefbc, 0.42);
+  scene.add(ambientLight);
+  const holoLight = new THREE.PointLight(0xffd33d, 2.15, 28, 2);
+  holoLight.position.set(0, 0.5, 4);
+  scene.add(holoLight);
+
+  const holoCore = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(MOBILE ? 0.48 : 0.56, 2),
+    new THREE.MeshPhongMaterial({
+      color: 0xffd84a,
+      emissive: 0xf6b200,
+      emissiveIntensity: 1.25,
+      transparent: true,
+      opacity: 0.26,
+      shininess: 110
+    })
+  );
+  holoCore.position.set(0, 0.22, 0.08);
+  universe.add(holoCore);
+
+  const holoShell = new THREE.Mesh(
+    new THREE.SphereGeometry(MOBILE ? 0.76 : 0.88, 26, 26),
+    new THREE.MeshPhongMaterial({
+      color: 0xffefb0,
+      emissive: 0xffd84a,
+      emissiveIntensity: 0.45,
+      transparent: true,
+      opacity: 0.065,
+      side: THREE.DoubleSide
+    })
+  );
+  holoShell.position.copy(holoCore.position);
+  universe.add(holoShell);
+
+  const holoRing1 = new THREE.Mesh(
+    new THREE.TorusGeometry(1.05, 0.016, 10, 120),
+    new THREE.MeshBasicMaterial({color:0xffdb4e,transparent:true,opacity:.48,blending:THREE.AdditiveBlending,depthWrite:false})
+  );
+  holoRing1.rotation.x = 1.18;
+  holoRing1.position.y = 0.16;
+  universe.add(holoRing1);
+
+  const holoRing2 = new THREE.Mesh(
+    new THREE.TorusGeometry(1.38, 0.012, 10, 120),
+    new THREE.MeshBasicMaterial({color:0xffc423,transparent:true,opacity:.30,blending:THREE.AdditiveBlending,depthWrite:false})
+  );
+  holoRing2.rotation.x = 0.56;
+  holoRing2.rotation.y = 0.92;
+  holoRing2.position.y = 0.18;
+  universe.add(holoRing2);
+
+  const holoRing3 = new THREE.Mesh(
+    new THREE.TorusGeometry(1.68, 0.009, 10, 120),
+    new THREE.MeshBasicMaterial({color:0xffef9a,transparent:true,opacity:.19,blending:THREE.AdditiveBlending,depthWrite:false})
+  );
+  holoRing3.rotation.x = 1.5;
+  holoRing3.rotation.z = 0.42;
+  holoRing3.position.y = 0.18;
+  universe.add(holoRing3);
+
+  const holoBeam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, MOBILE ? 0.92 : 1.08, 3.4, 48, 1, true),
+    new THREE.MeshBasicMaterial({
+      color:0xffd84d,
+      transparent:true,
+      opacity:.035,
+      side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
+  holoBeam.position.y = -0.55;
+  universe.add(holoBeam);
+
+  const pedestal1 = new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE ? 0.9 : 1.05, 0.022, 10, 120),
+    new THREE.MeshBasicMaterial({color:0xffd84d,transparent:true,opacity:.46,blending:THREE.AdditiveBlending})
+  );
+  pedestal1.rotation.x = Math.PI / 2;
+  pedestal1.position.y = -2.25;
+  universe.add(pedestal1);
+
+  const pedestal2 = new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE ? 1.22 : 1.42, 0.011, 10, 120),
+    new THREE.MeshBasicMaterial({color:0xffb900,transparent:true,opacity:.23,blending:THREE.AdditiveBlending})
+  );
+  pedestal2.rotation.x = Math.PI / 2;
+  pedestal2.position.y = -2.25;
+  universe.add(pedestal2);
+
   const PARTICLES = MOBILE ? 1800 : 3600;
 
   function normalizeCount(arr, n) {
@@ -406,31 +497,74 @@
     floatingFlowers.push({s,y,phase:Math.random()*7,speed:.23+Math.random()*.35});
   }
 
+
   function textTexture(text) {
-    const c = document.createElement("canvas"), ctx = c.getContext("2d"), fs=42;
-    ctx.font = "600 "+fs+"px Comic Sans MS, cursive";
-    c.width = Math.min(1500, Math.ceil(ctx.measureText(text).width + 60));
-    c.height = 86;
+    const c = document.createElement("canvas");
+    const measure = c.getContext("2d");
+    const fs = MOBILE ? 31 : 35;
+    measure.font = "700 " + fs + "px Arial, sans-serif";
+    const padX = MOBILE ? 28 : 34;
+    const h = MOBILE ? 76 : 82;
+    c.width = Math.min(1600, Math.ceil(measure.measureText(text).width + padX * 2));
+    c.height = h;
+
     const x = c.getContext("2d");
-    x.font = "600 "+fs+"px Comic Sans MS, cursive";
-    x.textAlign = "center"; x.textBaseline = "middle";
-    x.shadowColor = "rgba(255,199,0,.9)"; x.shadowBlur = 14;
-    x.fillStyle = "#ffeb93"; x.fillText(text,c.width/2,c.height/2);
-    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const r = 24;
+    const grd = x.createLinearGradient(0, 0, 0, h);
+    grd.addColorStop(0, "rgba(25,20,5,.82)");
+    grd.addColorStop(1, "rgba(5,4,1,.62)");
+    x.fillStyle = grd;
+    x.strokeStyle = "rgba(255,219,93,.60)";
+    x.lineWidth = 2;
+
+    x.beginPath();
+    x.moveTo(r, 1);
+    x.lineTo(c.width-r, 1);
+    x.quadraticCurveTo(c.width-1,1,c.width-1,r);
+    x.lineTo(c.width-1,h-r);
+    x.quadraticCurveTo(c.width-1,h-1,c.width-r,h-1);
+    x.lineTo(r,h-1);
+    x.quadraticCurveTo(1,h-1,1,h-r);
+    x.lineTo(1,r);
+    x.quadraticCurveTo(1,1,r,1);
+    x.closePath();
+    x.fill();
+    x.stroke();
+
+    x.shadowColor = "rgba(255,195,0,.92)";
+    x.shadowBlur = 14;
+    x.fillStyle = "#fff1ad";
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    x.font = "700 " + fs + "px Arial, sans-serif";
+    x.fillText(text, c.width/2, h/2 + 1);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
     return {tex,ratio:c.width/c.height};
   }
 
   const phraseGroup = new THREE.Group();
   universe.add(phraseGroup);
   const phraseData = [];
+
   PHRASES.forEach((txt,i) => {
+    if (MOBILE && i % 2 === 1) return;
     const {tex,ratio} = textTexture(txt);
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,opacity:.7}));
-    const a=i/PHRASES.length*Math.PI*2+i*.15, r=3.7+(i%3)*1.05, y=-1.4+(i%6)*.73, h=MOBILE?.18:.22;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:tex,transparent:true,depthWrite:false,opacity:.91
+    }));
+    const visibleIndex = MOBILE ? Math.floor(i/2) : i;
+    const total = MOBILE ? Math.ceil(PHRASES.length/2) : PHRASES.length;
+    const a = visibleIndex/total*Math.PI*2 + visibleIndex*.21;
+    const r = (MOBILE ? 4.35 : 4.55) + (visibleIndex%3)*(MOBILE ? .82 : 1.08);
+    const yBands = MOBILE ? [-1.25,-.35,.55,1.45,2.25] : [-1.35,-.62,.12,.86,1.6,2.28];
+    const y = yBands[visibleIndex % yBands.length];
+    const h = MOBILE ? .235 : .285;
     s.scale.set(h*ratio,h,1);
-    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.63);
+    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.68);
     phraseGroup.add(s);
-    phraseData.push({s,y,phase:i*.71});
+    phraseData.push({s,y,phase:visibleIndex*.83,baseX:s.position.x,baseZ:s.position.z});
   });
 
   const photoGroup = new THREE.Group();
@@ -548,13 +682,29 @@
     spiral.rotation.y=t*.11;
     glow.scale.setScalar(8.1+Math.sin(t*.9)*.28);
 
+    holoCore.rotation.x += .008;
+    holoCore.rotation.y += .011;
+    holoShell.rotation.x -= .0025;
+    holoShell.rotation.y += .0035;
+    holoRing1.rotation.z += .012;
+    holoRing2.rotation.z -= .009;
+    holoRing3.rotation.y += .006;
+    holoRing3.rotation.z += .004;
+    pedestal1.rotation.z += .0045;
+    pedestal2.rotation.z -= .0032;
+    holoCore.material.emissiveIntensity = 1.05 + (Math.sin(t*2.3)+1)*.18;
+    holoShell.material.opacity = .055 + (Math.sin(t*1.7)+1)*.012;
+    holoBeam.material.opacity = .026 + (Math.sin(t*1.15)+1)*.012;
+
     floatingFlowers.forEach(o=>{
       o.s.position.y=o.y+Math.sin(t*o.speed+o.phase)*.14;
       o.s.material.rotation=Math.sin(t*.3+o.phase)*.09;
     });
     phraseData.forEach(o=>{
-      o.s.position.y=o.y+Math.sin(t*.52+o.phase)*.06;
-      o.s.material.opacity=.56+(Math.sin(t*.7+o.phase)+1)*.13;
+      o.s.position.y=o.y+Math.sin(t*.42+o.phase)*.045;
+      o.s.position.x=o.baseX+Math.sin(t*.18+o.phase)*.028;
+      o.s.position.z=o.baseZ+Math.cos(t*.16+o.phase)*.025;
+      o.s.material.opacity=.82+(Math.sin(t*.58+o.phase)+1)*.065;
     });
     photoData.forEach(o=>{
       o.card.position.y=o.y+Math.sin(t*.58+o.phase)*.09;
