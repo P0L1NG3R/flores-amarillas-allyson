@@ -833,9 +833,9 @@
   const wrapMat = new THREE.MeshPhongMaterial({color:0xf0c84b,emissive:0x6b4500,emissiveIntensity:.14,shininess:90});
 
   const FLOATING_FLOWER_MODELS = [
-    {src:"assets/floating-flower-1.webp",type:"bouquet",visualScale:MOBILE?.43:.54},
-    {src:"assets/floating-flower-2.webp",type:"single",visualScale:MOBILE?.49:.61},
-    {src:"assets/floating-flower-3.webp",type:"cluster",visualScale:MOBILE?.45:.57}
+    {src:"assets/floating-flower-1.png",type:"bouquet",visualScale:MOBILE?.43:.54},
+    {src:"assets/floating-flower-2.png",type:"single",visualScale:MOBILE?.49:.61},
+    {src:"assets/floating-flower-3.png",type:"cluster",visualScale:MOBILE?.45:.57}
   ];
 
   const floatingModelLoader=new THREE.TextureLoader();
