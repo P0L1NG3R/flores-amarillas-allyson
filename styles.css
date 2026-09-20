@@ -512,16 +512,18 @@ body.experience-active::before{
   pointer-events:none;
   opacity:0;
   background:
-    radial-gradient(ellipse at 50% 50%,rgba(255,236,160,.15) 0,rgba(255,197,30,.07) 20%,transparent 49%),
-    conic-gradient(from 20deg at 50% 50%,transparent 0 36%,rgba(255,226,121,.035) 42%,transparent 48% 82%,rgba(255,193,27,.028) 88%,transparent 94%);
+    radial-gradient(circle at 28% 36%,rgba(103,190,255,.055) 0,rgba(86,153,255,.022) 16%,transparent 36%),
+    radial-gradient(circle at 72% 64%,rgba(141,102,255,.040) 0,transparent 32%),
+    radial-gradient(ellipse at 50% 50%,rgba(255,236,160,.18) 0,rgba(255,197,30,.085) 21%,transparent 51%),
+    conic-gradient(from 20deg at 50% 50%,transparent 0 33%,rgba(123,208,255,.045) 39%,rgba(255,226,121,.052) 44%,transparent 50% 80%,rgba(255,193,27,.038) 88%,transparent 95%);
   mix-blend-mode:screen;
   transform:scale(.88) rotate(0deg);
   transition:opacity 1.2s ease;
-  filter:blur(5px)
+  filter:blur(6px)
 }
 body.experience-active .cinematic-flare{
-  opacity:.46;
-  animation:cinematicFlare 20s linear infinite
+  opacity:.60;
+  animation:cinematicFlare 17s linear infinite
 }
 
 /* Se conserva la capa por compatibilidad, pero ahora es una neblina dorada: sin scanlines. */
@@ -532,22 +534,23 @@ body.experience-active .cinematic-flare{
   pointer-events:none;
   opacity:0;
   background:
-    radial-gradient(circle at 28% 38%,rgba(255,230,134,.055) 0 1px,transparent 1.8px),
-    radial-gradient(circle at 72% 61%,rgba(255,198,44,.042) 0 1px,transparent 1.7px),
-    radial-gradient(ellipse at 50% 51%,rgba(255,212,78,.035),transparent 55%);
-  background-size:92px 92px,137px 137px,100% 100%;
+    radial-gradient(circle at 28% 38%,rgba(255,230,134,.070) 0 1px,transparent 1.8px),
+    radial-gradient(circle at 72% 61%,rgba(255,198,44,.052) 0 1px,transparent 1.7px),
+    radial-gradient(circle at 57% 24%,rgba(132,211,255,.055) 0 1px,transparent 1.9px),
+    radial-gradient(ellipse at 50% 51%,rgba(255,212,78,.042),rgba(99,176,255,.018) 36%,transparent 58%);
+  background-size:92px 92px,137px 137px,121px 121px,100% 100%;
   mix-blend-mode:screen;
   filter:blur(.15px);
   transition:opacity 1.4s ease
 }
-body.experience-active .holo-scanlines{opacity:.58;animation:goldenVeil 13s ease-in-out infinite}
+body.experience-active .holo-scanlines{opacity:.70;animation:goldenVeil 10.5s ease-in-out infinite}
 
 #galaxy{
   transition:filter 1.4s ease;
   filter:saturate(1.10) contrast(1.018) brightness(.99)
 }
 body.experience-active #galaxy{
-  filter:saturate(1.17) contrast(1.03) brightness(1.025)
+  filter:saturate(1.24) contrast(1.045) brightness(1.04)
 }
 
 body.experience-active .hero-copy strong{
