@@ -145,8 +145,14 @@ body::after{
 .round-btn.playing{background:rgba(106,77,0,.3);border-color:rgba(255,223,91,.48);box-shadow:0 0 34px rgba(255,204,0,.27)}
 
 .hero-copy{
-  position:fixed;left:50%;top:11.7%;z-index:5;transform:translateX(-50%);width:min(92vw,760px);
+  position:fixed;left:50%;top:11.3%;z-index:12;transform:translateX(-50%);width:min(92vw,760px);
   text-align:center;pointer-events:none;text-shadow:0 2px 22px #000
+}
+.hero-copy::before{
+  content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(92vw,720px);height:150px;
+  transform:translate(-50%,-45%);pointer-events:none;
+  background:radial-gradient(ellipse,rgba(0,0,0,.54) 0,rgba(0,0,0,.28) 42%,transparent 74%);
+  filter:blur(9px)
 }
 .hero-copy span{
   display:inline-block;padding:6px 12px;border:1px solid rgba(255,229,129,.18);border-radius:999px;
@@ -159,7 +165,8 @@ body::after{
   display:block;margin:9px auto 0;max-width:700px;color:#ffeb9a;
   font:600 clamp(26px,4.2vw,43px)/1.04 var(--serif);letter-spacing:-.015em;
   text-wrap:balance;
-  filter:drop-shadow(0 0 16px rgba(255,214,62,.22)) drop-shadow(0 0 42px rgba(255,177,0,.08))
+  filter:drop-shadow(0 0 18px rgba(255,214,62,.25)) drop-shadow(0 0 46px rgba(255,177,0,.10));
+  transition:opacity .46s ease,transform .46s ease,filter .46s ease
 }
 
 .progress-dots{
@@ -256,9 +263,9 @@ body::after{
   .topbar h2{font-size:19px}
   .round-btn{width:41px;height:41px}
 
-  .hero-copy{top:10.2%;width:88vw}
+  .hero-copy{top:10.0%;width:90vw}
   .hero-copy span{font-size:7px;padding:4px 8px}
-  .hero-copy strong{margin-top:6px;font-size:25px;line-height:1.02;max-width:330px}
+  .hero-copy strong{margin-top:6px;font-size:24px;line-height:1.04;max-width:340px}
 
   .progress-dots{bottom:48px}
   .hint{bottom:18px;font-size:7px;padding:6px 9px}
@@ -489,6 +496,13 @@ body::after{
 /* v7: el recuerdo flotante fue eliminado del DOM. */
 .memory-spotlight{display:none!important}
 
+
+
+/* Refuerzo de foco central: las decoraciones siguen presentes, pero el ojo vuelve al morph principal. */
+body.experience-active::before{
+  content:"";position:fixed;inset:0;z-index:4;pointer-events:none;
+  background:radial-gradient(circle at 50% 50%,transparent 0 23%,rgba(0,0,0,.035) 35%,rgba(0,0,0,.15) 66%,rgba(0,0,0,.28) 100%);
+}
 
 /* === Romantic golden light layer v18 === */
 .cinematic-flare{
