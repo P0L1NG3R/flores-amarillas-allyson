@@ -28,12 +28,6 @@
     "Siempre tú 💛"
   ];
 
-  const MEMORY_MOMENTS = [
-    {photo: "assets/foto2.jpg", text: "Hay momentos pequeños que terminan significándolo todo."},
-    {photo: "assets/foto5.jpg", text: "De todos los recuerdos, me gusta cómo se sienten cuando estás tú."},
-    {photo: "assets/foto8.jpg", text: "Y lo mejor es que todavía nos quedan muchas historias por guardar."}
-  ];
-
   const $ = q => document.querySelector(q);
   const canvas = $("#galaxy");
   const start = $("#start");
@@ -44,9 +38,6 @@
   const closeBtn = $("#close");
   const shapeLabel = $("#shapeLabel");
   const heroTitle = $("#heroTitle");
-  const memorySpotlight = $("#memorySpotlight");
-  const memoryImage = $("#memoryImage");
-  const memoryCaption = $("#memoryCaption");
   const finale = $("#finale");
   const finaleOpen = $("#finaleOpen");
   const finaleExplore = $("#finaleExplore");
@@ -60,13 +51,11 @@
   let burst = 0;
   let finaleShown = false;
   let storyPaused = false;
-  let memoryTimer = null;
   let secretPulse = 0;
 
   function openLetter() {
     letter.classList.add("show");
     letter.setAttribute("aria-hidden", "false");
-    memorySpotlight?.classList.remove("show");
   }
 
   function closeLetter() {
@@ -629,123 +618,148 @@
   }));
   universe.add(morph);
 
-  function sunflowerTexture() {
-    const c = document.createElement("canvas");
-    c.width = c.height = 256;
-    const x = c.getContext("2d");
-    x.translate(128,128);
-    x.shadowColor = "rgba(255,190,0,.48)";
-    x.shadowBlur = 13;
-
-    // Petalos traseros: mas largos y suaves.
-    for (let ring = 0; ring < 2; ring++) {
-      const count = ring === 0 ? 18 : 14;
-      for (let i = 0; i < count; i++) {
-        x.save();
-        x.rotate(i * Math.PI * 2 / count + (ring ? .12 : 0));
-        const g = x.createLinearGradient(0,-18,0,-105);
-        g.addColorStop(0, ring ? "#e99a00" : "#f7ae00");
-        g.addColorStop(.54, ring ? "#ffc51f" : "#ffd63a");
-        g.addColorStop(1, ring ? "#ffe979" : "#fff1a4");
-        x.fillStyle = g;
-        x.beginPath();
-        x.ellipse(0, ring ? -56 : -68, ring ? 14 : 12, ring ? 39 : 47, 0, 0, Math.PI*2);
-        x.fill();
-        x.restore();
-      }
-    }
-
-    x.shadowBlur = 0;
-    const cg=x.createRadialGradient(-10,-12,2,0,0,47);
-    cg.addColorStop(0,"#8f5b08");cg.addColorStop(.55,"#5d3405");cg.addColorStop(1,"#2b1804");
-    x.fillStyle=cg;x.beginPath();x.arc(0,0,44,0,Math.PI*2);x.fill();
-
-    for (let i=0;i<150;i++) {
-      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*36;
-      const s=1+Math.random()*1.5;
-      x.fillStyle=i%4===0?"#ffd74a":i%2?"#c6840b":"#8f5707";
-      x.beginPath();x.arc(Math.cos(a)*r,Math.sin(a)*r,s,0,Math.PI*2);x.fill();
-    }
-
-    x.strokeStyle="rgba(255,245,175,.34)";x.lineWidth=1.4;
-    x.beginPath();x.arc(-7,-8,30,-2.8,-1.1);x.stroke();
-
-    const t = new THREE.CanvasTexture(c);
-    t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  }
-
-  function yellowFlowerTexture() {
-    const c = document.createElement("canvas");
-    c.width = c.height = 256;
-    const x = c.getContext("2d");
-    x.translate(128,128);
-    x.shadowColor = "rgba(255,210,55,.42)";
-    x.shadowBlur = 10;
-
-    for (let ring = 0; ring < 2; ring++) {
-      const count = ring === 0 ? 11 : 9;
-      for (let i = 0; i < count; i++) {
-        x.save();
-        x.rotate(i / count * Math.PI * 2 + (ring ? .20 : 0));
-        const g = x.createLinearGradient(0,-10,0,-92);
-        g.addColorStop(0, ring ? "#ffc31e" : "#ffd332");
-        g.addColorStop(.62, ring ? "#ffdd58" : "#ffe777");
-        g.addColorStop(1, "#fff4b7");
-        x.fillStyle = g;
-        x.beginPath();
-        x.ellipse(0, ring ? -49 : -60, ring ? 17 : 15, ring ? 35 : 43, 0, 0, Math.PI*2);
-        x.fill();
-        x.restore();
-      }
-    }
-
-    x.shadowBlur = 0;
-    const g = x.createRadialGradient(-5,-6,2,0,0,33);
-    g.addColorStop(0,"#d38d16");
-    g.addColorStop(.7,"#9a5c0a");
-    g.addColorStop(1,"#603405");
-    x.fillStyle=g;
-    x.beginPath();x.arc(0,0,32,0,Math.PI*2);x.fill();
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }
-
-  const sunflowerTex = sunflowerTexture();
-  const yellowFlowerTex = yellowFlowerTexture();
+  /* Flores decorativas 3D: girasoles y flores amarillas intercalados. */
   const flowerGroup = new THREE.Group();
   universe.add(flowerGroup);
   const floatingFlowers = [];
 
-  // Una flor decorativa entre cada foto: foto -> flor -> foto -> girasol.
-  const floatingCount = MOBILE ? (LOW_MEMORY ? 6 : 7) : 12;
-  for (let i = 0; i < floatingCount; i++) {
-    const isSunflower = i % 2 === 1;
-    const material = new THREE.SpriteMaterial({
-      map: isSunflower ? sunflowerTex : yellowFlowerTex,
-      transparent: true,
-      depthWrite: false,
-      opacity: MOBILE ? 0.78 : 0.88
-    });
-    const s = new THREE.Sprite(material);
-    const a = ((i + 0.5) / floatingCount) * Math.PI * 2 + 0.25;
-    const r = (MOBILE ? 3.35 : 3.45) + (i % 3) * (MOBILE ? 0.46 : 0.70);
-    const y = -1.35 + (i % 6) * (MOBILE ? 0.63 : 0.67);
-    const sc = isSunflower
-      ? (MOBILE ? 0.48 : 0.60)
-      : (MOBILE ? 0.39 : 0.49);
+  const decoPetalGeo = MOBILE
+    ? new THREE.ShapeGeometry(petalShape, 5)
+    : new THREE.ExtrudeGeometry(petalShape, {
+        depth: 0.026,
+        steps: 1,
+        bevelEnabled: true,
+        bevelSegments: 1,
+        bevelSize: 0.008,
+        bevelThickness: 0.008
+      });
+  decoPetalGeo.center();
 
-    const frontDepth = i % 3 === 0 ? (MOBILE ? 0.62 : 0.95) : 0;
-    s.position.set(Math.cos(a)*r, y, Math.sin(a)*r*.62 + frontDepth);
-    s.scale.set(sc,sc,1);
-    flowerGroup.add(s);
+  const decoCenterGeo = new THREE.SphereGeometry(0.28, MOBILE ? 10 : 14, MOBILE ? 7 : 10);
+  const decoStemGeo = new THREE.CylinderGeometry(0.022, 0.032, 1.0, MOBILE ? 6 : 8);
+
+  const leafShape = new THREE.Shape();
+  leafShape.moveTo(0, 0);
+  leafShape.bezierCurveTo(-0.20, 0.12, -0.22, 0.42, 0, 0.58);
+  leafShape.bezierCurveTo(0.22, 0.42, 0.20, 0.12, 0, 0);
+  const decoLeafGeo = new THREE.ShapeGeometry(leafShape, 5);
+  decoLeafGeo.center();
+
+  const sunflowerPetalMat = new THREE.MeshPhongMaterial({
+    color:0xffcf2f,emissive:0x8f4f00,emissiveIntensity:.10,shininess:95,
+    side:THREE.DoubleSide,transparent:true,opacity:.98
+  });
+  const yellowPetalMat = new THREE.MeshPhongMaterial({
+    color:0xffe46b,emissive:0xa46a00,emissiveIntensity:.08,shininess:105,
+    side:THREE.DoubleSide,transparent:true,opacity:.97
+  });
+  const sunflowerCenterMat = new THREE.MeshPhongMaterial({
+    color:0x4c2605,emissive:0x1a0b00,emissiveIntensity:.28,shininess:42
+  });
+  const yellowCenterMat = new THREE.MeshPhongMaterial({
+    color:0xb86f0a,emissive:0x5d3100,emissiveIntensity:.20,shininess:64
+  });
+  const stemMat = new THREE.MeshPhongMaterial({color:0x5f7421,emissive:0x182006,emissiveIntensity:.12,shininess:42});
+  const leafMat = new THREE.MeshPhongMaterial({color:0x71872b,emissive:0x1c2708,emissiveIntensity:.10,shininess:36,side:THREE.DoubleSide});
+
+  function makeFloatingBloom(isSunflower,index){
+    const g=new THREE.Group();
+    const petalCount=isSunflower ? (MOBILE?11:15) : (MOBILE?9:12);
+    const innerCount=isSunflower ? (MOBILE?7:10) : (MOBILE?6:8);
+    const petalMat=isSunflower?sunflowerPetalMat:yellowPetalMat;
+    const centerMat=isSunflower?sunflowerCenterMat:yellowCenterMat;
+
+    for(let ring=0;ring<2;ring++){
+      const count=ring===0?petalCount:innerCount;
+      const radius=isSunflower
+        ? (ring===0?.31:.22)
+        : (ring===0?.27:.19);
+      for(let p=0;p<count;p++){
+        const a=p/count*Math.PI*2+(ring?Math.PI/count:0);
+        const petal=new THREE.Mesh(decoPetalGeo,petalMat);
+        const sx=isSunflower?(ring===0?.22:.17):(ring===0?.24:.19);
+        const sy=isSunflower?(ring===0?.48:.36):(ring===0?.40:.30);
+        petal.scale.set(sx,sy,MOBILE?1:.92);
+        petal.position.set(Math.cos(a)*radius,Math.sin(a)*radius,ring===0?-.025:.035);
+        petal.rotation.z=a-Math.PI/2;
+        petal.rotation.x=(isSunflower?.18:.11)+Math.sin(a)*.07;
+        petal.rotation.y=Math.cos(a)*.045;
+        g.add(petal);
+      }
+    }
+
+    const center=new THREE.Mesh(decoCenterGeo,centerMat);
+    center.scale.set(isSunflower?1.02:.82,isSunflower?1.02:.82,.48);
+    center.position.z=.13;
+    g.add(center);
+
+    if(index%3!==1){
+      const stem=new THREE.Mesh(decoStemGeo,stemMat);
+      stem.position.set(.02,-.67,-.06);
+      stem.rotation.z=(index%2?.10:-.08);
+      g.add(stem);
+
+      const leaf=new THREE.Mesh(decoLeafGeo,leafMat);
+      leaf.scale.set(.34,.48,1);
+      leaf.position.set(index%2?.20:-.20,-.62,-.01);
+      leaf.rotation.z=index%2?-1.05:1.05;
+      leaf.rotation.x=.18;
+      g.add(leaf);
+    }
+
+    const halo=new THREE.Sprite(new THREE.SpriteMaterial({
+      map:glowTexture(),color:isSunflower?0xffb91e:0xffd95b,
+      transparent:true,opacity:MOBILE?.085:.11,depthWrite:false,
+      blending:THREE.AdditiveBlending
+    }));
+    halo.position.z=-.22;
+    halo.scale.set(isSunflower?1.7:1.45,isSunflower?1.7:1.45,1);
+    g.add(halo);
+
+    return g;
+  }
+
+  const floatingCount=MOBILE?(LOW_MEMORY?5:7):13;
+  for(let i=0;i<floatingCount;i++){
+    const isSunflower=i%2===1;
+    const g=makeFloatingBloom(isSunflower,i);
+    const a=((i+.45)/floatingCount)*Math.PI*2+.22;
+    const r=(MOBILE?3.20:3.35)+(i%3)*(MOBILE?.46:.72);
+    const y=-1.48+(i%6)*(MOBILE?.60:.66);
+    const front=i%4===0?(MOBILE?.52:.92):0;
+    const baseScale=isSunflower
+      ? (MOBILE?.58:.72)+(i%3)*.025
+      : (MOBILE?.50:.62)+(i%3)*.022;
+
+    g.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.60+front);
+    g.scale.setScalar(baseScale);
+    flowerGroup.add(g);
+
     floatingFlowers.push({
-      s,y,baseScale:sc,baseX:s.position.x,baseZ:s.position.z,
-      phase:i*.91,speed:.13+Math.random()*.12,isSunflower
+      g,y,baseX:g.position.x,baseZ:g.position.z,baseScale,
+      phase:i*.83,speed:.11+(i%4)*.018,isSunflower,
+      tilt:(i%2?1:-1)*(.035+(i%3)*.012)
     });
   }
+
+  /* Polen luminoso sutil alrededor de fotos y flores. */
+  const pollenCount=MOBILE?(LOW_MEMORY?28:42):96;
+  const pollenPos=new Float32Array(pollenCount*3);
+  for(let i=0;i<pollenCount;i++){
+    const a=Math.random()*Math.PI*2;
+    const r=2.3+Math.random()*(MOBILE?3.2:4.5);
+    pollenPos[i*3]=Math.cos(a)*r;
+    pollenPos[i*3+1]=-2.1+Math.random()*4.8;
+    pollenPos[i*3+2]=Math.sin(a)*r*.62+(Math.random()-.5)*1.2;
+  }
+  const pollenGeo=new THREE.BufferGeometry();
+  pollenGeo.setAttribute("position",new THREE.BufferAttribute(pollenPos,3));
+  const pollen=new THREE.Points(pollenGeo,new THREE.PointsMaterial({
+    map:particleTexture(),color:0xffdc62,size:MOBILE?.045:.038,
+    transparent:true,opacity:MOBILE?.34:.42,depthWrite:false,
+    blending:THREE.AdditiveBlending,alphaTest:.02
+  }));
+  universe.add(pollen);
 
 
   function textTexture(text) {
@@ -798,23 +812,26 @@
   universe.add(phraseGroup);
   const phraseData = [];
 
-  PHRASES.forEach((txt,i) => {
-    if (MOBILE && i % 3 !== 0) return;
+  // Menos etiquetas simultaneas: dejan respirar a las fotos y a las flores 3D.
+  const visiblePhrases = PHRASES.filter((_,i) =>
+    MOBILE ? i % 4 === 0 : i % 3 !== 2
+  );
+
+  visiblePhrases.forEach((txt,i) => {
     const {tex,ratio} = textTexture(txt);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({
-      map:tex,transparent:true,depthWrite:false,opacity:.91
+      map:tex,transparent:true,depthWrite:false,opacity:MOBILE?.70:.76
     }));
-    const visibleIndex = MOBILE ? Math.floor(i/3) : i;
-    const total = MOBILE ? Math.ceil(PHRASES.length/3) : PHRASES.length;
-    const a = visibleIndex/total*Math.PI*2 + visibleIndex*.21;
-    const r = (MOBILE ? 4.35 : 4.55) + (visibleIndex%3)*(MOBILE ? .82 : 1.08);
-    const yBands = MOBILE ? [-1.25,-.35,.55,1.45,2.25] : [-1.35,-.62,.12,.86,1.6,2.28];
-    const y = yBands[visibleIndex % yBands.length];
-    const h = MOBILE ? .235 : .285;
+    const total=visiblePhrases.length;
+    const a=i/total*Math.PI*2+i*.24;
+    const r=(MOBILE?4.55:4.75)+(i%3)*(MOBILE?.70:.94);
+    const yBands=MOBILE?[-1.15,.10,1.35]:[-1.30,-.50,.30,1.10,1.90];
+    const y=yBands[i%yBands.length];
+    const h=MOBILE?.205:.245;
     s.scale.set(h*ratio,h,1);
-    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.68);
+    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.66);
     phraseGroup.add(s);
-    phraseData.push({s,y,phase:visibleIndex*.83,baseX:s.position.x,baseZ:s.position.z});
+    phraseData.push({s,y,phase:i*.91,baseX:s.position.x,baseZ:s.position.z});
   });
 
   const photoGroup = new THREE.Group();
@@ -848,28 +865,10 @@
   let shapeIndex=0,nextShape=1;
   const HOLD=4100, MORPH=3400;
 
-  function showMemory(memoryIndex){
-    if (!memorySpotlight || !MEMORY_MOMENTS[memoryIndex]) return;
-    const memory = MEMORY_MOMENTS[memoryIndex];
-    if (memoryTimer) clearTimeout(memoryTimer);
-    memorySpotlight.classList.remove("show");
-    setTimeout(() => {
-      memoryImage.src = memory.photo;
-      memoryCaption.textContent = memory.text;
-      memorySpotlight.setAttribute("aria-hidden", "false");
-      memorySpotlight.classList.add("show");
-    }, 220);
-    memoryTimer = setTimeout(() => {
-      memorySpotlight.classList.remove("show");
-      memorySpotlight.setAttribute("aria-hidden", "true");
-    }, 3300);
-  }
-
   function showFinale(){
     if (finaleShown || !finale) return;
     finaleShown = true;
     storyPaused = true;
-    memorySpotlight?.classList.remove("show");
     finale.setAttribute("aria-hidden", "false");
     requestAnimationFrame(() => finale.classList.add("show"));
   }
@@ -888,10 +887,6 @@
         i === 3 ? "Flores para guardar nuestros recuerdos" :
         "Mi lugar favorito sigue siendo contigo";
     },180);
-
-    if (i === 1) setTimeout(() => showMemory(0), 1250);
-    if (i === 2) setTimeout(() => showMemory(1), 1450);
-    if (i === 3) setTimeout(() => showMemory(2), 1250);
 
     dots.forEach((d,j)=>d.classList.toggle("on",j===i));
   }
@@ -1010,16 +1005,24 @@
 
     if(secretPulse>0) secretPulse*=.91;
     floatingFlowers.forEach(o=>{
-      const lift=REDUCED_MOTION?0:Math.sin(t*o.speed+o.phase)*.075;
-      const sway=REDUCED_MOTION?0:Math.sin(t*.11+o.phase)*.035;
-      o.s.position.y=o.y+lift;
-      o.s.position.x=o.baseX+sway;
-      o.s.position.z=o.baseZ+(REDUCED_MOTION?0:Math.cos(t*.10+o.phase)*.025);
-      o.s.material.rotation=REDUCED_MOTION?0:Math.sin(t*.16+o.phase)*.032;
-      const pulse=secretPulse>0?1+secretPulse*.28:1;
-      o.s.scale.setScalar(o.baseScale*pulse);
-      o.s.material.opacity=Math.min(1,(MOBILE?.78:.88)+(secretPulse>0?secretPulse*.14:0));
+      const lift=REDUCED_MOTION?0:Math.sin(t*o.speed+o.phase)*.085;
+      const sway=REDUCED_MOTION?0:Math.sin(t*.10+o.phase)*.055;
+      const depth=REDUCED_MOTION?0:Math.cos(t*.085+o.phase)*.045;
+      o.g.position.y=o.y+lift;
+      o.g.position.x=o.baseX+sway;
+      o.g.position.z=o.baseZ+depth;
+
+      // Compensa gran parte del giro del universo para que la flor siga legible,
+      // pero conserva una inclinacion sutil que deja ver su volumen 3D.
+      o.g.rotation.y=-ry+(REDUCED_MOTION?0:Math.sin(t*.13+o.phase)*.08);
+      o.g.rotation.x=-rx+(REDUCED_MOTION?0:Math.cos(t*.11+o.phase)*.045);
+      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.17+o.phase)*.045);
+
+      const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.31+o.phase)*.025))*(secretPulse>0?1+secretPulse*.20:1);
+      o.g.scale.setScalar(o.baseScale*pulse);
     });
+    pollen.rotation.y=REDUCED_MOTION?0:t*.012;
+    pollen.position.y=REDUCED_MOTION?0:Math.sin(t*.27)*.04;
     phraseData.forEach(o=>{
       o.s.position.y=o.y+Math.sin(t*.42+o.phase)*.045;
       o.s.position.x=o.baseX+Math.sin(t*.18+o.phase)*.028;

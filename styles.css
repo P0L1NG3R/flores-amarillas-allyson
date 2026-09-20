@@ -480,3 +480,7 @@ body::after{
   .hero-copy strong{font-size:21px;max-width:285px}
   .hero-copy span{background:rgba(8,6,1,.18);backdrop-filter:blur(3px)}
 }
+
+
+/* v7: el recuerdo flotante fue eliminado del DOM. */
+.memory-spotlight{display:none!important}
