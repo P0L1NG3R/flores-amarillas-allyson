@@ -2,7 +2,10 @@
   "use strict";
 
   const MOBILE = matchMedia("(max-width: 650px)").matches;
+  const REDUCED_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const LOW_MEMORY = MOBILE && ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
   const PHOTOS = Array.from({length: 9}, (_, i) => "assets/foto" + (i + 1) + ".jpg");
+  const SCENE_PHOTOS = MOBILE ? PHOTOS.filter((_, i) => i % 2 === 0) : PHOTOS;
   const PHRASES = [
     "Gracias por ser mi sol de siempre",
     "Allyson, eres mi lugar favorito",
@@ -79,6 +82,9 @@
   const finale = $("#finale");
   const finaleOpen = $("#finaleOpen");
   const finaleExplore = $("#finaleExplore");
+  const secretName = $("#secretName");
+  const secretSurprise = $("#secretSurprise");
+  const secretClose = $("#secretClose");
   const dots = [...document.querySelectorAll(".progress-dots i")];
 
   let experienceStarted = false;
@@ -87,6 +93,7 @@
   let finaleShown = false;
   let storyPaused = false;
   let memoryTimer = null;
+  let secretPulse = 0;
 
   function openLetter() {
     letter.classList.add("show");
@@ -110,6 +117,7 @@
         storyPaused = false;
         morphStart = performance.now();
       }
+      if (secretSurprise?.classList.contains("show")) closeSecret();
     }
   });
 
@@ -127,6 +135,25 @@
     storyPaused = false;
     morphStart = performance.now();
   });
+
+  function closeSecret(){
+    secretSurprise?.classList.remove("show");
+    secretSurprise?.setAttribute("aria-hidden", "true");
+    if (!finale?.classList.contains("show") && !letter?.classList.contains("show")) {
+      storyPaused = false;
+      morphStart = performance.now();
+    }
+  }
+
+  secretName?.addEventListener("click", () => {
+    secretPulse = 1;
+    burst = Math.max(burst, 1.25);
+    storyPaused = true;
+    secretSurprise?.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => secretSurprise?.classList.add("show"));
+  });
+  secretClose?.addEventListener("click", closeSecret);
+  secretSurprise?.addEventListener("click", e => { if (e.target === secretSurprise) closeSecret(); });
 
   /* Música original, generada en el navegador. Funciona sin archivos externos. */
   let audioCtx = null, master = null, musicOn = false, musicTimer = null, musicStep = 0;
@@ -263,7 +290,7 @@
     return;
   }
 
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? 1.35 : 1.8));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? (LOW_MEMORY ? 1 : 1.12) : 1.65));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.45;
@@ -317,8 +344,8 @@
     return obj;
   }
 
-  const farStars = starField(MOBILE ? 1050 : 2400, 10, 38, 0.038, 0.55);
-  const nearStars = starField(MOBILE ? 350 : 720, 5, 17, 0.052, 0.74);
+  const farStars = starField(MOBILE ? (LOW_MEMORY ? 420 : 620) : 2100, 10, 38, 0.038, 0.52);
+  const nearStars = starField(MOBILE ? (LOW_MEMORY ? 110 : 180) : 620, 5, 17, 0.052, 0.70);
 
   function glowTexture() {
     const c = document.createElement("canvas");
@@ -365,7 +392,7 @@
   universe.add(holoCore);
 
   const holoShell = new THREE.Mesh(
-    new THREE.SphereGeometry(MOBILE ? 0.76 : 0.88, 26, 26),
+    new THREE.SphereGeometry(MOBILE ? 0.76 : 0.88, MOBILE ? 16 : 26, MOBILE ? 16 : 26),
     new THREE.MeshPhongMaterial({
       color: 0xffefb0,
       emissive: 0xffd84a,
@@ -379,7 +406,7 @@
   universe.add(holoShell);
 
   const holoRing1 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.05, 0.016, 10, 120),
+    new THREE.TorusGeometry(1.05, 0.016, 8, MOBILE ? 64 : 120),
     new THREE.MeshBasicMaterial({color:0xffdb4e,transparent:true,opacity:.48,blending:THREE.AdditiveBlending,depthWrite:false})
   );
   holoRing1.rotation.x = 1.18;
@@ -387,7 +414,7 @@
   universe.add(holoRing1);
 
   const holoRing2 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.38, 0.012, 10, 120),
+    new THREE.TorusGeometry(1.38, 0.012, 8, MOBILE ? 64 : 120),
     new THREE.MeshBasicMaterial({color:0xffc423,transparent:true,opacity:.30,blending:THREE.AdditiveBlending,depthWrite:false})
   );
   holoRing2.rotation.x = 0.56;
@@ -396,7 +423,7 @@
   universe.add(holoRing2);
 
   const holoRing3 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.68, 0.009, 10, 120),
+    new THREE.TorusGeometry(1.68, 0.009, 8, MOBILE ? 64 : 120),
     new THREE.MeshBasicMaterial({color:0xffef9a,transparent:true,opacity:.19,blending:THREE.AdditiveBlending,depthWrite:false})
   );
   holoRing3.rotation.x = 1.5;
@@ -419,7 +446,7 @@
   universe.add(holoBeam);
 
   const pedestal1 = new THREE.Mesh(
-    new THREE.TorusGeometry(MOBILE ? 0.9 : 1.05, 0.022, 10, 120),
+    new THREE.TorusGeometry(MOBILE ? 0.9 : 1.05, 0.022, 8, MOBILE ? 64 : 120),
     new THREE.MeshBasicMaterial({color:0xffd84d,transparent:true,opacity:.46,blending:THREE.AdditiveBlending})
   );
   pedestal1.rotation.x = Math.PI / 2;
@@ -427,14 +454,14 @@
   universe.add(pedestal1);
 
   const pedestal2 = new THREE.Mesh(
-    new THREE.TorusGeometry(MOBILE ? 1.22 : 1.42, 0.011, 10, 120),
+    new THREE.TorusGeometry(MOBILE ? 1.22 : 1.42, 0.011, 8, MOBILE ? 64 : 120),
     new THREE.MeshBasicMaterial({color:0xffb900,transparent:true,opacity:.23,blending:THREE.AdditiveBlending})
   );
   pedestal2.rotation.x = Math.PI / 2;
   pedestal2.position.y = -2.25;
   universe.add(pedestal2);
 
-  const PARTICLES = MOBILE ? 1800 : 3600;
+  const PARTICLES = MOBILE ? (LOW_MEMORY ? 720 : 1050) : 3200;
 
   function normalizeCount(arr, n) {
     const out = [];
@@ -453,10 +480,15 @@
     const a = [];
     for (let i = 0; i < PARTICLES; i++) {
       const t = Math.random() * Math.PI * 2;
-      const f = Math.sqrt(Math.random());
+      const edge = Math.random() < 0.70;
+      const f = edge ? (0.88 + Math.random() * 0.12) : Math.sqrt(Math.random()) * 0.84;
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-      a.push([x * 0.064 * f, y * 0.064 * f + 0.25, (Math.random() - 0.5) * 0.48]);
+      a.push([
+        x * 0.066 * f,
+        y * 0.066 * f + 0.18,
+        (Math.random() - 0.5) * (edge ? 0.18 : 0.34)
+      ]);
     }
     return a;
   }
@@ -464,11 +496,24 @@
   function flowerShape() {
     const a = [];
     for (let i = 0; i < PARTICLES; i++) {
-      const t = Math.random() * Math.PI * 2;
-      const center = Math.random() < 0.28;
-      const r = center ? Math.sqrt(Math.random()) * 0.63 :
-        (0.62 + Math.random() * 0.58) * (0.75 + 0.42 * Math.pow(Math.abs(Math.cos(8 * t)), 0.62));
-      a.push([Math.cos(t) * r * 2.0, Math.sin(t) * r * 2.0 + 0.25, (Math.random() - 0.5) * 0.34]);
+      const center = Math.random() < 0.24;
+      if (center) {
+        const t = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * 0.64;
+        a.push([Math.cos(t) * r, Math.sin(t) * r + 0.18, (Math.random() - 0.5) * 0.18]);
+      } else {
+        const petal = Math.floor(Math.random() * 12);
+        const base = petal / 12 * Math.PI * 2;
+        const along = Math.pow(Math.random(), 0.62);
+        const spread = (Math.random() - 0.5) * 0.34 * (0.35 + along);
+        const r = 0.58 + along * 1.72;
+        const t = base + spread;
+        a.push([
+          Math.cos(t) * r,
+          Math.sin(t) * r + 0.18,
+          (Math.random() - 0.5) * 0.22 + Math.sin(along * Math.PI) * 0.08
+        ]);
+      }
     }
     return a;
   }
@@ -480,7 +525,7 @@
     x.fillStyle = "#fff";
     x.textAlign = "center";
     x.textBaseline = "middle";
-    x.font = "900 170px Arial Black, Arial";
+    x.font = "700 176px Georgia, 'Times New Roman', serif";
     x.fillText(text, 500, 135);
     const d = x.getImageData(0,0,c.width,c.height).data;
     const pts = [];
@@ -522,9 +567,39 @@
     morphPos[i*3+2] = p[2];
   });
   morphGeo.setAttribute("position", new THREE.BufferAttribute(morphPos, 3));
+
+  const morphColors = new Float32Array(PARTICLES * 3);
+  const morphColor = new THREE.Color();
+  for (let i = 0; i < PARTICLES; i++) {
+    const palette = i % 5;
+    morphColor.setHex(palette === 0 ? 0xfff0a1 : palette === 1 ? 0xffd83d : palette === 2 ? 0xffbf21 : palette === 3 ? 0xffe76f : 0xffcf32);
+    morphColors[i*3] = morphColor.r;
+    morphColors[i*3+1] = morphColor.g;
+    morphColors[i*3+2] = morphColor.b;
+  }
+  morphGeo.setAttribute("color", new THREE.BufferAttribute(morphColors, 3));
+
+  function particleTexture(){
+    const c=document.createElement("canvas"); c.width=c.height=64;
+    const x=c.getContext("2d");
+    const g=x.createRadialGradient(32,32,1,32,32,31);
+    g.addColorStop(0,"rgba(255,255,235,1)");
+    g.addColorStop(.18,"rgba(255,239,155,.98)");
+    g.addColorStop(.48,"rgba(255,204,48,.72)");
+    g.addColorStop(1,"rgba(255,176,0,0)");
+    x.fillStyle=g;x.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  }
+
   const morph = new THREE.Points(morphGeo, new THREE.PointsMaterial({
-    color: 0xffdc43, size: MOBILE ? 0.046 : 0.038, transparent: true,
-    opacity: 0.97, depthWrite: false, blending: THREE.AdditiveBlending
+    map: particleTexture(),
+    vertexColors: true,
+    size: MOBILE ? 0.075 : 0.058,
+    transparent: true,
+    opacity: 0.92,
+    alphaTest: 0.025,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
   }));
   universe.add(morph);
 
@@ -533,29 +608,42 @@
     c.width = c.height = 256;
     const x = c.getContext("2d");
     x.translate(128,128);
-    x.shadowColor = "rgba(255,201,0,.8)";
-    x.shadowBlur = 10;
-    for (let i = 0; i < 18; i++) {
-      x.save();
-      x.rotate(i * Math.PI * 2 / 18);
-      const g = x.createLinearGradient(0,-15,0,-98);
-      g.addColorStop(0,"#ffac00");
-      g.addColorStop(.55,"#ffd529");
-      g.addColorStop(1,"#fff1a1");
-      x.fillStyle = g;
-      x.beginPath();
-      x.ellipse(0,-61,16.5,47,0,0,Math.PI*2);
-      x.fill();
-      x.restore();
+    x.shadowColor = "rgba(255,190,0,.48)";
+    x.shadowBlur = 13;
+
+    // Petalos traseros: mas largos y suaves.
+    for (let ring = 0; ring < 2; ring++) {
+      const count = ring === 0 ? 18 : 14;
+      for (let i = 0; i < count; i++) {
+        x.save();
+        x.rotate(i * Math.PI * 2 / count + (ring ? .12 : 0));
+        const g = x.createLinearGradient(0,-18,0,-105);
+        g.addColorStop(0, ring ? "#e99a00" : "#f7ae00");
+        g.addColorStop(.54, ring ? "#ffc51f" : "#ffd63a");
+        g.addColorStop(1, ring ? "#ffe979" : "#fff1a4");
+        x.fillStyle = g;
+        x.beginPath();
+        x.ellipse(0, ring ? -56 : -68, ring ? 14 : 12, ring ? 39 : 47, 0, 0, Math.PI*2);
+        x.fill();
+        x.restore();
+      }
     }
+
     x.shadowBlur = 0;
-    x.fillStyle = "#5f3800";
-    x.beginPath(); x.arc(0,0,42,0,Math.PI*2); x.fill();
-    for (let i=0;i<90;i++) {
-      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*34;
-      x.fillStyle=i%3?"#c98a00":"#f7c933";
-      x.beginPath();x.arc(Math.cos(a)*r,Math.sin(a)*r,1.6,0,Math.PI*2);x.fill();
+    const cg=x.createRadialGradient(-10,-12,2,0,0,47);
+    cg.addColorStop(0,"#8f5b08");cg.addColorStop(.55,"#5d3405");cg.addColorStop(1,"#2b1804");
+    x.fillStyle=cg;x.beginPath();x.arc(0,0,44,0,Math.PI*2);x.fill();
+
+    for (let i=0;i<150;i++) {
+      const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*36;
+      const s=1+Math.random()*1.5;
+      x.fillStyle=i%4===0?"#ffd74a":i%2?"#c6840b":"#8f5707";
+      x.beginPath();x.arc(Math.cos(a)*r,Math.sin(a)*r,s,0,Math.PI*2);x.fill();
     }
+
+    x.strokeStyle="rgba(255,245,175,.34)";x.lineWidth=1.4;
+    x.beginPath();x.arc(-7,-8,30,-2.8,-1.1);x.stroke();
+
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
@@ -565,13 +653,20 @@
   const flowerGroup = new THREE.Group();
   universe.add(flowerGroup);
   const floatingFlowers = [];
-  for (let i = 0; i < (MOBILE ? 12 : 22); i++) {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:flowerTex,transparent:true,depthWrite:false}));
-    const a = Math.random()*Math.PI*2, r = 3.2 + Math.random()*4.7, y = -1.6 + Math.random()*4.9, sc = 0.34 + Math.random()*0.45;
-    s.position.set(Math.cos(a)*r, y, (Math.random()-.5)*6.2);
+  for (let i = 0; i < (MOBILE ? (LOW_MEMORY ? 5 : 7) : 18); i++) {
+    const material = new THREE.SpriteMaterial({
+      map:flowerTex,transparent:true,depthWrite:false,
+      opacity:MOBILE ? .76 : .84
+    });
+    const s = new THREE.Sprite(material);
+    const a = Math.random()*Math.PI*2;
+    const r = (MOBILE ? 3.7 : 3.2) + Math.random()*(MOBILE ? 3.2 : 4.8);
+    const y = -1.45 + Math.random()*4.55;
+    const sc = (MOBILE ? .30 : .33) + Math.random()*(MOBILE ? .30 : .42);
+    s.position.set(Math.cos(a)*r, y, (Math.random()-.5)*(MOBILE ? 4.6 : 6.4));
     s.scale.set(sc,sc,1);
     flowerGroup.add(s);
-    floatingFlowers.push({s,y,phase:Math.random()*7,speed:.23+Math.random()*.35});
+    floatingFlowers.push({s,y,baseScale:sc,phase:Math.random()*7,speed:.18+Math.random()*.28});
   }
 
 
@@ -626,13 +721,13 @@
   const phraseData = [];
 
   PHRASES.forEach((txt,i) => {
-    if (MOBILE && i % 2 === 1) return;
+    if (MOBILE && i % 3 !== 0) return;
     const {tex,ratio} = textTexture(txt);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({
       map:tex,transparent:true,depthWrite:false,opacity:.91
     }));
-    const visibleIndex = MOBILE ? Math.floor(i/2) : i;
-    const total = MOBILE ? Math.ceil(PHRASES.length/2) : PHRASES.length;
+    const visibleIndex = MOBILE ? Math.floor(i/3) : i;
+    const total = MOBILE ? Math.ceil(PHRASES.length/3) : PHRASES.length;
     const a = visibleIndex/total*Math.PI*2 + visibleIndex*.21;
     const r = (MOBILE ? 4.35 : 4.55) + (visibleIndex%3)*(MOBILE ? .82 : 1.08);
     const yBands = MOBILE ? [-1.25,-.35,.55,1.45,2.25] : [-1.35,-.62,.12,.86,1.6,2.28];
@@ -648,7 +743,7 @@
   universe.add(photoGroup);
   const photoData = [];
   const loader = new THREE.TextureLoader();
-  PHOTOS.forEach((src,i) => loader.load(src, tex => {
+  SCENE_PHOTOS.forEach((src,i) => loader.load(src, tex => {
     tex.colorSpace = THREE.SRGBColorSpace;
     const ratio = tex.image.width / tex.image.height;
     const base = MOBILE ? .78 : 1.0;
@@ -665,7 +760,7 @@
     }));
     card.add(frame);
     frame.position.z=-.014;
-    const a=i/PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.0:3.25)+(i%2)*1.35, y=-1.25+(i%5)*.72;
+    const a=i/SCENE_PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.25:3.25)+(i%2)*(MOBILE?.82:1.35), y=-1.15+(i%5)*.68;
     card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.74);
     card.rotation.y=-a+Math.PI/2;
     photoGroup.add(card);
@@ -673,7 +768,7 @@
   }));
 
   const spiralPts=[];
-  const spiralN=MOBILE?1000:2200;
+  const spiralN=MOBILE?(LOW_MEMORY?320:520):1900;
   for(let i=0;i<spiralN;i++){
     const u=i/spiralN,t=u*Math.PI*21,r=.06+u*5;
     spiralPts.push([Math.cos(t)*r,-2.42+(Math.random()-.5)*.07,Math.sin(t)*r*.68]);
@@ -761,7 +856,7 @@
     requestAnimationFrame(animate);
     const t=clock.getElapsedTime();
 
-    if(!drag) targetRY += experienceStarted ? .0031 : .0008;
+    if(!drag && !REDUCED_MOTION) targetRY += experienceStarted ? (MOBILE ? .0017 : .0031) : .0008;
     ry+=(targetRY-ry)*.06;
     rx+=(targetRX-rx)*.06;
     universe.rotation.y=ry;
@@ -822,9 +917,14 @@
     holoShell.material.opacity = .055 + (Math.sin(t*1.7)+1)*.012;
     holoBeam.material.opacity = .026 + (Math.sin(t*1.15)+1)*.012;
 
+    if(secretPulse>0) secretPulse*=.91;
     floatingFlowers.forEach(o=>{
-      o.s.position.y=o.y+Math.sin(t*o.speed+o.phase)*.14;
-      o.s.material.rotation=Math.sin(t*.3+o.phase)*.09;
+      const lift = REDUCED_MOTION ? 0 : Math.sin(t*o.speed+o.phase)*.10;
+      o.s.position.y=o.y+lift;
+      o.s.material.rotation=REDUCED_MOTION ? 0 : Math.sin(t*.22+o.phase)*.055;
+      const pulse = secretPulse>0 ? 1 + secretPulse*.34 : 1;
+      o.s.scale.setScalar(o.baseScale * pulse);
+      if(secretPulse>0) o.s.material.opacity=Math.min(1,.78+secretPulse*.20);
     });
     phraseData.forEach(o=>{
       o.s.position.y=o.y+Math.sin(t*.42+o.phase)*.045;

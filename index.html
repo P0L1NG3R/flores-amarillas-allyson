@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/foto1.jpg">
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
   <canvas id="galaxy" aria-label="Universo 3D de flores amarillas para Allyson"></canvas>
@@ -61,7 +61,7 @@
       <div class="brand-mark" aria-hidden="true">🌻</div>
       <div>
         <p>Feliz Día de las Flores Amarillas</p>
-        <h2>Allyson <span>💛</span></h2>
+        <h2><button id="secretName" class="secret-name" type="button" aria-label="Allyson, descubrir mensaje secreto">Allyson <span>💛</span></button></h2>
       </div>
     </div>
     <button id="music" class="round-btn" type="button" aria-label="Activar o desactivar música" title="Música">♫</button>
@@ -107,6 +107,17 @@
     </div>
   </section>
 
+  <section id="secretSurprise" class="secret-surprise" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="secretTitle">
+    <div class="secret-card">
+      <button id="secretClose" class="secret-close" type="button" aria-label="Cerrar sorpresa">×</button>
+      <div class="secret-bloom" aria-hidden="true">🌻</div>
+      <span>Encontraste algo escondido ✦</span>
+      <h2 id="secretTitle">Allyson, tú eres mi flor favorita.</h2>
+      <p>No importa cuántas flores haya en este universo: siempre voy a reconocerte a ti primero. 💛</p>
+      <small>Toca tu nombre cuando quieras volver a verlo.</small>
+    </div>
+  </section>
+
   <section id="letter" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="letterTitle">
     <article>
       <button id="close" type="button" aria-label="Cerrar carta">×</button>
@@ -144,6 +155,6 @@
     };
   </script>
   <script src="vendor/three.min.js?v=159"></script>
-  <script src="script.js?v=12"></script>
+  <script src="script.js?v=13"></script>
 </body>
 </html>
