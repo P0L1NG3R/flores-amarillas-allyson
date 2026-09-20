@@ -25,6 +25,40 @@
     "Siempre tú 💛"
   ];
 
+  const STORY_BEATS = [
+    {
+      step: "01 · PARA TI",
+      title: "Todo empieza con una flor",
+      text: "Porque hay detalles que merecen quedarse un poquito más."
+    },
+    {
+      step: "02 · LO QUE SIENTO",
+      title: "Después aparece un corazón",
+      text: "No por casualidad: muchas de las cosas bonitas de mis días llevan algo de ti."
+    },
+    {
+      step: "03 · TU NOMBRE",
+      title: "Y el universo aprende a decir Allyson",
+      text: "Entre miles de puntos de luz, hay un nombre que quería dejar en el centro."
+    },
+    {
+      step: "04 · PARA RECORDAR",
+      title: "Un ramo entero todavía se queda corto",
+      text: "Así que guardé también algunos recuerdos que no quisiera perder."
+    },
+    {
+      step: "05 · SIEMPRE TÚ",
+      title: "Al final, todo vuelve al mismo lugar",
+      text: "A la suerte de haberte encontrado y a todo lo que todavía nos queda por vivir."
+    }
+  ];
+
+  const MEMORY_MOMENTS = [
+    {photo: "assets/foto2.jpg", text: "Hay momentos pequeños que terminan significándolo todo."},
+    {photo: "assets/foto5.jpg", text: "De todos los recuerdos, me gusta cómo se sienten cuando estás tú."},
+    {photo: "assets/foto8.jpg", text: "Y lo mejor es que todavía nos quedan muchas historias por guardar."}
+  ];
+
   const $ = q => document.querySelector(q);
   const canvas = $("#galaxy");
   const start = $("#start");
@@ -34,23 +68,65 @@
   const letter = $("#letter");
   const closeBtn = $("#close");
   const shapeLabel = $("#shapeLabel");
+  const heroTitle = $("#heroTitle");
+  const storyMoment = $("#storyMoment");
+  const storyStep = $("#storyStep");
+  const storyTitle = $("#storyTitle");
+  const storyText = $("#storyText");
+  const memorySpotlight = $("#memorySpotlight");
+  const memoryImage = $("#memoryImage");
+  const memoryCaption = $("#memoryCaption");
+  const finale = $("#finale");
+  const finaleOpen = $("#finaleOpen");
+  const finaleExplore = $("#finaleExplore");
   const dots = [...document.querySelectorAll(".progress-dots i")];
 
   let experienceStarted = false;
   let morphStart = performance.now();
   let burst = 0;
+  let finaleShown = false;
+  let storyPaused = false;
+  let memoryTimer = null;
+
+  function openLetter() {
+    letter.classList.add("show");
+    letter.setAttribute("aria-hidden", "false");
+    memorySpotlight?.classList.remove("show");
+  }
 
   function closeLetter() {
     letter.classList.remove("show");
     letter.setAttribute("aria-hidden", "true");
   }
-  letterBtn.addEventListener("click", () => {
-    letter.classList.add("show");
-    letter.setAttribute("aria-hidden", "false");
-  });
+  letterBtn.addEventListener("click", openLetter);
   closeBtn.addEventListener("click", closeLetter);
   letter.addEventListener("click", e => { if (e.target === letter) closeLetter(); });
-  addEventListener("keydown", e => { if (e.key === "Escape") closeLetter(); });
+  addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      closeLetter();
+      if (finale?.classList.contains("show")) {
+        finale.classList.remove("show");
+        finale.setAttribute("aria-hidden", "true");
+        storyPaused = false;
+        morphStart = performance.now();
+      }
+    }
+  });
+
+  finaleOpen?.addEventListener("click", () => {
+    finale.classList.remove("show");
+    finale.setAttribute("aria-hidden", "true");
+    storyPaused = false;
+    morphStart = performance.now();
+    openLetter();
+  });
+
+  finaleExplore?.addEventListener("click", () => {
+    finale.classList.remove("show");
+    finale.setAttribute("aria-hidden", "true");
+    storyPaused = false;
+    morphStart = performance.now();
+  });
 
   /* Música original, generada en el navegador. Funciona sin archivos externos. */
   let audioCtx = null, master = null, musicOn = false, musicTimer = null, musicStep = 0;
@@ -149,6 +225,7 @@
     experienceStarted = true;
     morphStart = performance.now();
     burst = 1;
+    setTimeout(() => storyMoment?.classList.add("active"), 700);
     if (startBtn) {
       startBtn.disabled = true;
       const txt = startBtn.querySelector("span");
@@ -607,14 +684,58 @@
   let shapeIndex=0,nextShape=1;
   const HOLD=3300, MORPH=2100;
 
+  function showMemory(memoryIndex){
+    if (!memorySpotlight || !MEMORY_MOMENTS[memoryIndex]) return;
+    const memory = MEMORY_MOMENTS[memoryIndex];
+    if (memoryTimer) clearTimeout(memoryTimer);
+    memorySpotlight.classList.remove("show");
+    setTimeout(() => {
+      memoryImage.src = memory.photo;
+      memoryCaption.textContent = memory.text;
+      memorySpotlight.setAttribute("aria-hidden", "false");
+      memorySpotlight.classList.add("show");
+    }, 220);
+    memoryTimer = setTimeout(() => {
+      memorySpotlight.classList.remove("show");
+      memorySpotlight.setAttribute("aria-hidden", "true");
+    }, 3300);
+  }
+
+  function showFinale(){
+    if (finaleShown || !finale) return;
+    finaleShown = true;
+    storyPaused = true;
+    memorySpotlight?.classList.remove("show");
+    finale.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => finale.classList.add("show"));
+  }
+
   function setShapeUI(i){
+    const beat = STORY_BEATS[i];
     shapeLabel.style.opacity="0";
     shapeLabel.style.transform="translateY(5px)";
+    if (storyMoment) storyMoment.classList.remove("active");
+
     setTimeout(()=>{
       shapeLabel.textContent=SHAPE_LABELS[i];
       shapeLabel.style.opacity="1";
       shapeLabel.style.transform="translateY(0)";
+
+      if (beat) {
+        storyStep.textContent = beat.step;
+        storyTitle.textContent = beat.title;
+        storyText.textContent = beat.text;
+        heroTitle.textContent = i === 2 ? "Tu nombre, escrito entre estrellas" :
+          i === 4 ? "Mi lugar favorito sigue siendo contigo" :
+          "Un universo hecho de nuestros recuerdos";
+        storyMoment?.classList.add("active");
+      }
     },180);
+
+    if (i === 1) setTimeout(() => showMemory(0), 1050);
+    if (i === 2) setTimeout(() => showMemory(1), 1150);
+    if (i === 3) setTimeout(() => showMemory(2), 1050);
+
     dots.forEach((d,j)=>d.classList.toggle("on",j===i));
   }
 
@@ -651,16 +772,21 @@
     camera.position.y=.05+Math.cos(t*.27)*(MOBILE?.018:.05);
     camera.lookAt(0,-.15,0);
 
-    if(experienceStarted){
+    if(experienceStarted && !storyPaused){
       const elapsed=now-morphStart;
-      if(elapsed>HOLD+MORPH){
+      const local=now-morphStart;
+
+      if(shapeIndex===4 && !finaleShown && local>2450){
+        showFinale();
+      }
+
+      if(!storyPaused && elapsed>HOLD+MORPH){
         shapeIndex=nextShape;
         nextShape=(nextShape+1)%targets.length;
         morphStart=now;
         setShapeUI(shapeIndex);
       }
-      const local=now-morphStart;
-      if(local>HOLD){
+      if(!storyPaused && local>HOLD){
         const q=smooth(Math.min(1,(local-HOLD)/MORPH));
         const from=targets[shapeIndex],to=targets[nextShape],pos=morph.geometry.attributes.position.array;
         for(let i=0;i<PARTICLES;i++){
