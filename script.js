@@ -341,6 +341,28 @@
   const farStars = starField(MOBILE ? (LOW_MEMORY ? 650 : 900) : 3200, 10, 40, MOBILE ? 0.040 : 0.036, MOBILE ? 0.50 : 0.56);
   const nearStars = starField(MOBILE ? (LOW_MEMORY ? 180 : 270) : 980, 4.8, 18, MOBILE ? 0.058 : 0.050, MOBILE ? 0.68 : 0.74);
 
+  // Capa espacial fría: pequeñas estrellas azuladas que contrastan con el dorado romántico.
+  const cosmicMotePoints = [];
+  const cosmicMoteCount = MOBILE ? (LOW_MEMORY ? 75 : 120) : 360;
+  for (let i = 0; i < cosmicMoteCount; i++) {
+    const r = 5.4 + Math.random() * (MOBILE ? 13 : 22);
+    const a = Math.random() * Math.PI * 2;
+    const y = (Math.random() - 0.5) * (MOBILE ? 8.5 : 12.5);
+    cosmicMotePoints.push([
+      Math.cos(a) * r,
+      y,
+      Math.sin(a) * r * 0.72
+    ]);
+  }
+  const cosmicMotes = pointsObject(
+    cosmicMotePoints,
+    MOBILE ? 0.038 : 0.032,
+    0x8ed8ff,
+    MOBILE ? 0.22 : 0.28
+  );
+  cosmicMotes.renderOrder = 1;
+  scene.add(cosmicMotes);
+
   function glowTexture() {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
@@ -556,14 +578,68 @@
     color:0xffdf68, wireframe:false, transparent:true, opacity:0,
     blending:THREE.AdditiveBlending, depthWrite:false
   });
-  const holoRingA = new THREE.Mesh(new THREE.TorusGeometry(MOBILE ? 1.02 : 1.14, 0.009, 4, MOBILE ? 48 : 88), holoRingMaterial);
-  const holoRingB = new THREE.Mesh(new THREE.TorusGeometry(MOBILE ? 1.30 : 1.48, 0.007, 4, MOBILE ? 48 : 88), holoRingMaterial.clone());
+  const holoRingA = new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE ? 1.02 : 1.14, 0.010, 4, MOBILE ? 48 : 88),
+    holoRingMaterial
+  );
+  const holoRingB = new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE ? 1.30 : 1.48, 0.008, 4, MOBILE ? 48 : 88),
+    holoRingMaterial.clone()
+  );
+  const holoRingC = new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE ? 1.55 : 1.78, 0.0055, 4, MOBILE ? 52 : 96),
+    new THREE.MeshBasicMaterial({
+      color:0x83d9ff,
+      transparent:true,
+      opacity:0,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    })
+  );
   holoRingA.rotation.x = Math.PI / 2.5;
   holoRingB.rotation.x = -Math.PI / 2.8;
-  hologramGroup.add(holoRingA, holoRingB);
+  holoRingC.rotation.set(Math.PI / 2.15, .28, .12);
+
+  const holoAura = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:glowTexture(),
+    color:0x78d8ff,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  }));
+  holoAura.position.z = -0.24;
+  holoAura.scale.set(MOBILE ? 3.15 : 3.65, MOBILE ? 3.15 : 3.65, 1);
+
+  const holoDustCount = MOBILE ? (LOW_MEMORY ? 52 : 88) : 180;
+  const holoDustPos = new Float32Array(holoDustCount * 3);
+  for (let i = 0; i < holoDustCount; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = .86 + Math.random() * (MOBILE ? 1.28 : 1.65);
+    const vertical = (Math.random() - .5) * (MOBILE ? 1.58 : 1.92);
+    holoDustPos[i*3] = Math.cos(a) * r;
+    holoDustPos[i*3+1] = vertical;
+    holoDustPos[i*3+2] = Math.sin(a) * r * .48 + (Math.random()-.5)*.22;
+  }
+  const holoDustGeo = new THREE.BufferGeometry();
+  holoDustGeo.setAttribute("position", new THREE.BufferAttribute(holoDustPos, 3));
+  const holoDust = new THREE.Points(holoDustGeo, new THREE.PointsMaterial({
+    map:glowTexture(),
+    color:0xb9ecff,
+    size:MOBILE?.055:.045,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    alphaTest:.015
+  }));
+
+  hologramGroup.add(holoAura, holoRingA, holoRingB, holoRingC, holoDust);
   hologramGroup.traverse(obj => {
     if (obj.isMesh || obj.isSprite || obj.isPoints) obj.renderOrder = 29;
   });
+  holoCenter.renderOrder = 31;
+  holoDust.renderOrder = 30;
   hologramGroup.visible = false;
 
   /* Corrientes de luz: profundidad 3D sin anillos ni efecto planeta. */
@@ -1073,8 +1149,14 @@
     edge.position.z=.022;
     card.add(photoHalo, backing, frame, glass, edge);
 
-    const a=i/SCENE_PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.72:4.02)+(i%2)*(MOBILE?.88:1.28), y=-1.28+(i%5)*.72;
-    card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.70-.28);
+    const isPhoto3 = /(?:^|\/)foto3\.jpg$/i.test(src);
+    const photo3YOffset = isPhoto3 ? (MOBILE ? -.72 : -.95) : 0;
+    const photo3Depth = isPhoto3 ? (MOBILE ? -.58 : -.82) : 0;
+    const a=i/SCENE_PHOTOS.length*Math.PI*2+.25;
+    const r=(MOBILE?3.72:4.02)+(i%2)*(MOBILE?.88:1.28);
+    const y=-1.28+(i%5)*.72+photo3YOffset;
+    card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.70-.28+photo3Depth);
+    if(isPhoto3) card.renderOrder=3;
     card.rotation.y=-a+Math.PI/2;
     photoGroup.add(card);
     photoData.push({
@@ -1240,23 +1322,43 @@
 
     const holoAlpha = REDUCED_MOTION
       ? 0
-      : THREE.MathUtils.clamp(entryEnergy*.34 + transitionEnergy*.70 + secretPulse*.30 + finaleEnergy*.18,0,.84);
-    hologramGroup.visible = holoAlpha > .012;
+      : THREE.MathUtils.clamp(
+          (experienceStarted ? .055 : 0) +
+          entryEnergy*.43 +
+          transitionEnergy*.94 +
+          secretPulse*.40 +
+          finaleEnergy*.31,
+          0,.98
+        );
+    hologramGroup.visible = holoAlpha > .010;
     hologramGroup.position.y = centralBloom.position.y;
-    hologramGroup.rotation.z = t*.055;
-    hologramGroup.rotation.y = Math.sin(t*.32)*.07;
-    const holoScale = 1 + transitionEnergy*.10 + entryEnergy*.07 + secretPulse*.08;
+    hologramGroup.rotation.z = t*.075;
+    hologramGroup.rotation.y = Math.sin(t*.34)*.095;
+    const holoScale = 1 + transitionEnergy*.13 + entryEnergy*.09 + secretPulse*.10;
     hologramGroup.scale.setScalar(holoScale);
     holoPetalMaterial.uniforms.uTime.value = t;
     holoPetalMaterial.uniforms.uAlpha.value = holoAlpha;
-    holoCenterMaterial.opacity = holoAlpha*.16;
-    holoRingA.material.opacity = holoAlpha*.22;
-    holoRingB.material.opacity = holoAlpha*.12;
-    holoRingA.rotation.z = t*.18;
-    holoRingB.rotation.z = -t*.13;
-    holoRingA.scale.setScalar(1+transitionEnergy*.18);
-    holoRingB.scale.setScalar(1+entryEnergy*.24+finaleEnergy*.10);
-    bloomLight.intensity += (transitionEnergy*.38 + entryEnergy*.22 + finaleEnergy*.12);
+    holoCenterMaterial.opacity = holoAlpha*.24;
+    holoRingA.material.opacity = holoAlpha*.34;
+    holoRingB.material.opacity = holoAlpha*.22;
+    holoRingC.material.opacity = holoAlpha*.18;
+    holoAura.material.opacity = holoAlpha*(MOBILE?.15:.20);
+    holoDust.material.opacity = holoAlpha*(MOBILE?.38:.50);
+
+    holoRingA.rotation.z = t*.34;
+    holoRingB.rotation.z = -t*.26;
+    holoRingC.rotation.z = t*.18;
+    holoRingA.rotation.x = Math.PI/2.5 + Math.sin(t*.45)*.075;
+    holoRingB.rotation.x = -Math.PI/2.8 + Math.cos(t*.38)*.065;
+    holoRingC.rotation.y = .28 + Math.sin(t*.29)*.12;
+    holoRingA.scale.setScalar(1+transitionEnergy*.24+Math.sin(t*1.15)*.018);
+    holoRingB.scale.setScalar(1+entryEnergy*.28+finaleEnergy*.13+Math.cos(t*.92)*.016);
+    holoRingC.scale.setScalar(1+transitionEnergy*.16+Math.sin(t*.72)*.022);
+    holoAura.scale.setScalar((MOBILE?3.15:3.65)*(1+Math.sin(t*.86)*.035+transitionEnergy*.08));
+    holoDust.rotation.y = t*.24;
+    holoDust.rotation.x = Math.sin(t*.31)*.11;
+
+    bloomLight.intensity += (transitionEnergy*.52 + entryEnergy*.31 + finaleEnergy*.20 + holoAlpha*.10);
 
     const stormEnergy = REDUCED_MOTION
       ? 0
@@ -1296,8 +1398,11 @@
     morph.rotation.x=REDUCED_MOTION?0:Math.sin(t*.17)*.012;
     farStars.rotation.y=REDUCED_MOTION?0:t*.0024;
     nearStars.rotation.y=REDUCED_MOTION?0:-t*.0042;
+    cosmicMotes.rotation.y=REDUCED_MOTION?0:-t*.0065;
+    cosmicMotes.rotation.x=REDUCED_MOTION?0:Math.sin(t*.12)*.018;
     farStars.material.opacity=(MOBILE?.48:.52)+(REDUCED_MOTION?0:Math.sin(t*.22)*.055);
     nearStars.material.opacity=(MOBILE?.65:.70)+(REDUCED_MOTION?0:Math.sin(t*.47+1.2)*.075);
+    cosmicMotes.material.opacity=(MOBILE?.18:.24)+(REDUCED_MOTION?0:Math.sin(t*.31+2.1)*.055)+transitionEnergy*.06;
     glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
     updateFlowTrails(t);
     flowGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.12)*.045;
