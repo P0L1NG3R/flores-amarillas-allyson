@@ -12,20 +12,43 @@
     "Mi mundo florece contigo",
     "Te elegiría una y mil veces",
     "Siempre tú, siempre nosotros",
-    "Eres mi casualidad favorita",
     "Tu sonrisa ilumina mi universo",
-    "Cada momento contigo vale oro",
     "Mis flores amarillas llevan tu nombre",
-    "Contigo hasta lo simple se vuelve recuerdo",
     "Qué suerte coincidir contigo",
-    "Lo bonito de mis días también tiene tu nombre"
+    "Eres mi casualidad favorita",
+    "Lo bonito de mis días también tiene tu nombre",
+    "Mi corazón siempre vuelve a ti",
+    "Contigo todo se siente más bonito",
+    "Eres la parte más linda de mis recuerdos",
+    "Si hay flores, pienso en ti",
+    "Tu luz hace especial mis días",
+    "Donde estés tú, ahí quiero estar",
+    "Eres mi detalle favorito",
+    "Todo florece un poco más contigo",
+    "Siempre encuentro paz en ti",
+    "Tú haces que todo tenga más sentido",
+    "Mi universo se ve mejor contigo",
+    "Tu nombre también florece en mí",
+    "Eres mi flor favorita",
+    "Siempre vas a ser mi lugar bonito",
+    "Cada momento contigo vale oro",
+    "Contigo hasta lo simple se vuelve recuerdo",
+    "Tu risa es una de mis luces favoritas",
+    "En cada universo volvería a encontrarte"
   ];
   const SHAPE_LABELS = [
     "Una flor para ti 🌻",
-    "Mi corazón es más bonito contigo 💛",
-    "ALLYSON ✨",
+    "Un corazón hecho de luz 💛",
+    "ALLYSON entre estrellas ✨",
     "Un ramo entero para ti 🌻",
-    "Siempre tú 💛"
+    "Siempre tú, siempre nosotros 💛"
+  ];
+  const HERO_TITLES = [
+    "Todo empieza con una flor que lleva un poquito de ti",
+    "Hay cosas que solo se pueden decir con el corazón",
+    "Tu nombre, escrito entre estrellas y luz dorada",
+    "Flores para guardar lo bonito de nuestros recuerdos",
+    "Mi lugar favorito sigue siendo contigo"
   ];
 
   const $ = q => document.querySelector(q);
@@ -291,8 +314,10 @@
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(a, 3));
     return new THREE.Points(g, new THREE.PointsMaterial({
+      map: glowTexture(),
       color, size, transparent: true, opacity, depthWrite: false,
-      blending: THREE.AdditiveBlending, sizeAttenuation: true
+      blending: THREE.AdditiveBlending, sizeAttenuation: true,
+      alphaTest: 0.018
     }));
   }
 
@@ -313,8 +338,8 @@
     return obj;
   }
 
-  const farStars = starField(MOBILE ? (LOW_MEMORY ? 420 : 620) : 2100, 10, 38, 0.038, 0.52);
-  const nearStars = starField(MOBILE ? (LOW_MEMORY ? 110 : 180) : 620, 5, 17, 0.052, 0.70);
+  const farStars = starField(MOBILE ? (LOW_MEMORY ? 650 : 900) : 3200, 10, 40, MOBILE ? 0.040 : 0.036, MOBILE ? 0.50 : 0.56);
+  const nearStars = starField(MOBILE ? (LOW_MEMORY ? 180 : 270) : 980, 4.8, 18, MOBILE ? 0.058 : 0.050, MOBILE ? 0.68 : 0.74);
 
   function glowTexture() {
     const c = document.createElement("canvas");
@@ -364,9 +389,11 @@
   centralBloom.add(bloomGlow);
 
   const petalShape = new THREE.Shape();
-  petalShape.moveTo(0, -0.08);
-  petalShape.bezierCurveTo(-0.23, 0.08, -0.30, 0.58, 0, 1.02);
-  petalShape.bezierCurveTo(0.30, 0.58, 0.23, 0.08, 0, -0.08);
+  petalShape.moveTo(0, -0.10);
+  petalShape.bezierCurveTo(-0.18, -0.01, -0.34, 0.34, -0.25, 0.66);
+  petalShape.bezierCurveTo(-0.18, 0.92, -0.06, 1.08, 0, 1.12);
+  petalShape.bezierCurveTo(0.07, 1.07, 0.20, 0.91, 0.27, 0.65);
+  petalShape.bezierCurveTo(0.35, 0.34, 0.18, -0.02, 0, -0.10);
 
   const petalGeo = MOBILE
     ? new THREE.ShapeGeometry(petalShape, 7)
@@ -374,9 +401,9 @@
         depth: 0.045,
         steps: 1,
         bevelEnabled: true,
-        bevelSegments: 1,
-        bevelSize: 0.012,
-        bevelThickness: 0.012
+        bevelSegments: 2,
+        bevelSize: 0.014,
+        bevelThickness: 0.014
       });
   petalGeo.center();
 
@@ -395,15 +422,17 @@
         opacity: 0.98
       });
       const petal = new THREE.Mesh(petalGeo, material);
-      petal.scale.set(scaleX, scaleY, MOBILE ? 1 : 0.92);
+      const variation = 0.94 + ((i * 17) % 13) / 100;
+      const curl = Math.sin(angle * 3 + i * 0.7);
+      petal.scale.set(scaleX * variation, scaleY * (0.95 + ((i * 11) % 9) / 100), MOBILE ? 1 : 0.94);
       petal.position.set(
-        Math.cos(angle) * radius,
-        Math.sin(angle) * radius,
-        zBase + Math.cos(angle * 2) * 0.045
+        Math.cos(angle) * (radius + curl * 0.018),
+        Math.sin(angle) * (radius + curl * 0.018),
+        zBase + Math.cos(angle * 2) * 0.052 + curl * 0.018
       );
-      petal.rotation.z = angle - Math.PI / 2;
-      petal.rotation.x = tilt + Math.sin(angle) * 0.09;
-      petal.rotation.y = Math.cos(angle) * 0.07;
+      petal.rotation.z = angle - Math.PI / 2 + curl * 0.025;
+      petal.rotation.x = tilt + Math.sin(angle) * 0.12 + curl * 0.035;
+      petal.rotation.y = Math.cos(angle) * 0.10 - curl * 0.025;
       centralBloom.add(petal);
       bloomPetals.push({
         petal, angle, radius,
@@ -413,8 +442,9 @@
     }
   }
 
-  addPetalRing(MOBILE ? 10 : 14, MOBILE ? 0.58 : 0.65, MOBILE ? 0.62 : 0.68, MOBILE ? 0.79 : 0.88, -0.07, 0xffc31b, 0xffdf55, 0, 0.34);
-  addPetalRing(MOBILE ? 8 : 11, MOBILE ? 0.41 : 0.47, MOBILE ? 0.52 : 0.57, MOBILE ? 0.62 : 0.70, 0.08, 0xffb40d, 0xffd334, Math.PI / (MOBILE ? 8 : 11), 0.22);
+  addPetalRing(MOBILE ? 12 : 18, MOBILE ? 0.60 : 0.68, MOBILE ? 0.60 : 0.66, MOBILE ? 0.82 : 0.92, -0.09, 0xffc01a, 0xffe36a, 0, 0.38);
+  addPetalRing(MOBILE ? 10 : 14, MOBILE ? 0.44 : 0.50, MOBILE ? 0.50 : 0.56, MOBILE ? 0.66 : 0.75, 0.055, 0xffb20d, 0xffd83b, Math.PI / (MOBILE ? 10 : 14), 0.27);
+  addPetalRing(MOBILE ? 8 : 10, MOBILE ? 0.31 : 0.34, MOBILE ? 0.39 : 0.43, MOBILE ? 0.49 : 0.55, 0.13, 0xffd13b, 0xffed80, Math.PI / 10, 0.18);
 
   const bloomCenter = new THREE.Mesh(
     new THREE.SphereGeometry(MOBILE ? 0.34 : 0.39, MOBILE ? 14 : 18, MOBILE ? 10 : 14),
@@ -477,12 +507,12 @@
       varying float vPulse;
       void main(){
         float fresnel = pow(1.0 - abs(dot(normalize(vNormalV), normalize(vView))), 1.55);
-        float scan = 0.58 + 0.42 * sin(gl_FragCoord.y * 0.19 - uTime * 7.0);
-        float flicker = 0.86 + 0.14 * sin(uTime * 11.0 + gl_FragCoord.x * 0.025);
-        vec3 amber = vec3(1.0, 0.53, 0.02);
-        vec3 gold = vec3(1.0, 0.95, 0.52);
-        vec3 col = mix(amber, gold, clamp(fresnel + vPulse * 0.22, 0.0, 1.0));
-        float alpha = (0.11 + fresnel * 0.78) * (0.72 + scan * 0.28) * flicker * uAlpha;
+        float breath = 0.92 + 0.08 * sin(uTime * 1.7 + vPulse * 2.0);
+        float softRim = pow(fresnel, 1.18);
+        vec3 amber = vec3(1.0, 0.61, 0.08);
+        vec3 cream = vec3(1.0, 0.96, 0.64);
+        vec3 col = mix(amber, cream, clamp(softRim + vPulse * 0.16, 0.0, 1.0));
+        float alpha = (0.055 + softRim * 0.48 + vPulse * 0.055) * breath * uAlpha;
         gl_FragColor = vec4(col, alpha);
       }
     `,
@@ -504,7 +534,7 @@
   }
 
   const holoCenterMaterial = new THREE.MeshBasicMaterial({
-    color:0xffb51f, wireframe:true, transparent:true, opacity:0,
+    color:0xffc73d, wireframe:false, transparent:true, opacity:0,
     blending:THREE.AdditiveBlending, depthWrite:false
   });
   const holoCenter = new THREE.Mesh(
@@ -516,7 +546,7 @@
   hologramGroup.add(holoCenter);
 
   const holoRingMaterial = new THREE.MeshBasicMaterial({
-    color:0xffdb55, wireframe:true, transparent:true, opacity:0,
+    color:0xffdf68, wireframe:false, transparent:true, opacity:0,
     blending:THREE.AdditiveBlending, depthWrite:false
   });
   const holoRingA = new THREE.Mesh(new THREE.TorusGeometry(MOBILE ? 1.02 : 1.14, 0.009, 4, MOBILE ? 48 : 88), holoRingMaterial);
@@ -573,7 +603,7 @@
     });
   }
 
-  const PARTICLES = MOBILE ? (LOW_MEMORY ? 720 : 1050) : 3200;
+  const PARTICLES = MOBILE ? (LOW_MEMORY ? 850 : 1250) : 3600;
 
   function normalizeCount(arr, n) {
     const out = [];
@@ -789,26 +819,32 @@
 
   function makeFloatingBloom(isSunflower,index){
     const g=new THREE.Group();
-    const petalCount=isSunflower ? (MOBILE?11:15) : (MOBILE?9:12);
-    const innerCount=isSunflower ? (MOBILE?7:10) : (MOBILE?6:8);
+    const petalCount=isSunflower ? (MOBILE?12:17) : (MOBILE?10:14);
+    const innerCount=isSunflower ? (MOBILE?9:12) : (MOBILE?7:10);
     const petalMat=isSunflower?sunflowerPetalMat:yellowPetalMat;
     const centerMat=isSunflower?sunflowerCenterMat:yellowCenterMat;
 
     for(let ring=0;ring<2;ring++){
       const count=ring===0?petalCount:innerCount;
       const radius=isSunflower
-        ? (ring===0?.31:.22)
-        : (ring===0?.27:.19);
+        ? (ring===0?.32:.225)
+        : (ring===0?.285:.195);
       for(let p=0;p<count;p++){
         const a=p/count*Math.PI*2+(ring?Math.PI/count:0);
         const petal=new THREE.Mesh(decoPetalGeo,petalMat);
-        const sx=isSunflower?(ring===0?.22:.17):(ring===0?.24:.19);
-        const sy=isSunflower?(ring===0?.48:.36):(ring===0?.40:.30);
-        petal.scale.set(sx,sy,MOBILE?1:.92);
-        petal.position.set(Math.cos(a)*radius,Math.sin(a)*radius,ring===0?-.025:.035);
-        petal.rotation.z=a-Math.PI/2;
-        petal.rotation.x=(isSunflower?.18:.11)+Math.sin(a)*.07;
-        petal.rotation.y=Math.cos(a)*.045;
+        const variance=.93+((p*13+index*7)%15)/100;
+        const curl=Math.sin(a*2.6+index*.73+p*.31);
+        const sx=(isSunflower?(ring===0?.22:.17):(ring===0?.24:.19))*variance;
+        const sy=(isSunflower?(ring===0?.49:.37):(ring===0?.42:.31))*(.95+((p*5)%9)/100);
+        petal.scale.set(sx,sy,MOBILE?1:.94);
+        petal.position.set(
+          Math.cos(a)*(radius+curl*.012),
+          Math.sin(a)*(radius+curl*.012),
+          (ring===0?-.028:.040)+curl*.018
+        );
+        petal.rotation.z=a-Math.PI/2+curl*.035;
+        petal.rotation.x=(isSunflower?.20:.13)+Math.sin(a)*.09+curl*.035;
+        petal.rotation.y=Math.cos(a)*.065-curl*.025;
         g.add(petal);
       }
     }
@@ -844,14 +880,14 @@
     return g;
   }
 
-  const floatingCount=MOBILE?(LOW_MEMORY?5:7):13;
+  const floatingCount=MOBILE?(LOW_MEMORY?10:12):22;
   for(let i=0;i<floatingCount;i++){
     const isSunflower=i%2===1;
     const g=makeFloatingBloom(isSunflower,i);
     const a=((i+.45)/floatingCount)*Math.PI*2+.22;
-    const r=(MOBILE?3.20:3.35)+(i%3)*(MOBILE?.46:.72);
-    const y=-1.48+(i%6)*(MOBILE?.60:.66);
-    const front=i%4===0?(MOBILE?.52:.92):0;
+    const r=(MOBILE?3.15:3.30)+(i%4)*(MOBILE?.38:.54);
+    const y=-1.72+(i%7)*(MOBILE?.52:.56);
+    const front=i%5===0?(MOBILE?.48:.82):0;
     const baseScale=isSunflower
       ? (MOBILE?.58:.72)+(i%3)*.025
       : (MOBILE?.50:.62)+(i%3)*.022;
@@ -868,7 +904,7 @@
   }
 
   /* Polen luminoso sutil alrededor de fotos y flores. */
-  const pollenCount=MOBILE?(LOW_MEMORY?28:42):96;
+  const pollenCount=MOBILE?(LOW_MEMORY?70:105):210;
   const pollenPos=new Float32Array(pollenCount*3);
   for(let i=0;i<pollenCount;i++){
     const a=Math.random()*Math.PI*2;
@@ -937,10 +973,8 @@
   universe.add(phraseGroup);
   const phraseData = [];
 
-  // Menos etiquetas simultaneas: dejan respirar a las fotos y a las flores 3D.
-  const visiblePhrases = PHRASES.filter((_,i) =>
-    MOBILE ? i % 4 === 0 : i % 3 !== 2
-  );
+  // Las frases forman una constelación legible alrededor del centro.
+  const visiblePhrases = MOBILE ? PHRASES.slice(0,24) : PHRASES;
 
   visiblePhrases.forEach((txt,i) => {
     const {tex,ratio} = textTexture(txt);
@@ -948,11 +982,11 @@
       map:tex,transparent:true,depthWrite:false,opacity:MOBILE?.70:.76
     }));
     const total=visiblePhrases.length;
-    const a=i/total*Math.PI*2+i*.24;
-    const r=(MOBILE?4.55:4.75)+(i%3)*(MOBILE?.70:.94);
-    const yBands=MOBILE?[-1.15,.10,1.35]:[-1.30,-.50,.30,1.10,1.90];
+    const a=i/total*Math.PI*2+i*.19;
+    const r=(MOBILE?4.70:4.95)+(i%4)*(MOBILE?.48:.68);
+    const yBands=MOBILE?[-1.55,-.78,.05,.82,1.58]:[-1.65,-.92,-.20,.52,1.24,1.92];
     const y=yBands[i%yBands.length];
-    const h=MOBILE?.205:.245;
+    const h=MOBILE?.175:.225;
     s.scale.set(h*ratio,h,1);
     s.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.66);
     phraseGroup.add(s);
@@ -1013,7 +1047,7 @@
   }));
 
   let shapeIndex=0,nextShape=1;
-  const HOLD=4100, MORPH=3400;
+  const HOLD=6500, MORPH=4200;
 
   function showFinale(){
     if (finaleShown || !finale) return;
@@ -1029,13 +1063,9 @@
 
     setTimeout(()=>{
       shapeLabel.textContent=SHAPE_LABELS[i];
+      heroTitle.textContent=HERO_TITLES[i];
       shapeLabel.style.opacity="1";
       shapeLabel.style.transform="translateY(0)";
-      heroTitle.textContent = i === 0 ? "Todo empieza con una flor" :
-        i === 1 ? "Hay cosas que solo se pueden decir con el corazón" :
-        i === 2 ? "Tu nombre, escrito entre estrellas" :
-        i === 3 ? "Flores para guardar nuestros recuerdos" :
-        "Mi lugar favorito sigue siendo contigo";
     },180);
 
     dots.forEach((d,j)=>d.classList.toggle("on",j===i));
@@ -1073,7 +1103,7 @@
       ? THREE.MathUtils.clamp((now - cinematicStart) / 2800, 0, 1)
       : 1;
     const introBoost = experienceStarted ? 1 - smooth(introRaw) : 0;
-    entryEnergy = experienceStarted ? Math.max(0, 1 - smooth(THREE.MathUtils.clamp((now-cinematicStart)/3300,0,1))) : 0;
+    entryEnergy = experienceStarted ? Math.max(0, 1 - smooth(THREE.MathUtils.clamp((now-cinematicStart)/4800,0,1))) : 0;
     const cinematicZ = cameraZTarget + introBoost * (MOBILE ? 3.0 : 4.1);
     camera.position.z+=(cinematicZ-camera.position.z)*.075;
     camera.position.x=Math.sin(t*.22)*(MOBILE?.03:.13)+pointerNX*(MOBILE?.055:.16);
@@ -1084,7 +1114,7 @@
       const elapsed=now-morphStart;
       const local=now-morphStart;
 
-      if(shapeIndex===4 && !finaleShown && local>3550){
+      if(shapeIndex===4 && !finaleShown && local>5200){
         showFinale();
       }
 
@@ -1152,22 +1182,22 @@
 
     const holoAlpha = REDUCED_MOTION
       ? 0
-      : THREE.MathUtils.clamp(entryEnergy*.72 + transitionEnergy*.92 + secretPulse*.55 + finaleEnergy*.28,0,1);
+      : THREE.MathUtils.clamp(entryEnergy*.42 + transitionEnergy*.56 + secretPulse*.32 + finaleEnergy*.20,0,.82);
     hologramGroup.visible = holoAlpha > .012;
     hologramGroup.position.y = centralBloom.position.y;
-    hologramGroup.rotation.z = t*.16;
-    hologramGroup.rotation.y = Math.sin(t*.55)*.14;
-    const holoScale = 1 + transitionEnergy*.18 + entryEnergy*.12 + secretPulse*.12;
+    hologramGroup.rotation.z = t*.055;
+    hologramGroup.rotation.y = Math.sin(t*.32)*.07;
+    const holoScale = 1 + transitionEnergy*.10 + entryEnergy*.07 + secretPulse*.08;
     hologramGroup.scale.setScalar(holoScale);
     holoPetalMaterial.uniforms.uTime.value = t;
     holoPetalMaterial.uniforms.uAlpha.value = holoAlpha;
-    holoCenterMaterial.opacity = holoAlpha*.48;
-    holoRingA.material.opacity = holoAlpha*.35;
-    holoRingB.material.opacity = holoAlpha*.22;
-    holoRingA.rotation.z = t*.62;
-    holoRingB.rotation.z = -t*.43;
-    holoRingA.scale.setScalar(1+transitionEnergy*.36);
-    holoRingB.scale.setScalar(1+entryEnergy*.52+finaleEnergy*.18);
+    holoCenterMaterial.opacity = holoAlpha*.16;
+    holoRingA.material.opacity = holoAlpha*.22;
+    holoRingB.material.opacity = holoAlpha*.12;
+    holoRingA.rotation.z = t*.18;
+    holoRingB.rotation.z = -t*.13;
+    holoRingA.scale.setScalar(1+transitionEnergy*.18);
+    holoRingB.scale.setScalar(1+entryEnergy*.24+finaleEnergy*.10);
     bloomLight.intensity += (transitionEnergy*.38 + entryEnergy*.22 + finaleEnergy*.12);
 
     const stormEnergy = REDUCED_MOTION
@@ -1206,8 +1236,10 @@
     // Sin efecto planeta: solo una inclinacion casi imperceptible.
     morph.rotation.y=REDUCED_MOTION?0:Math.sin(t*.20)*.035;
     morph.rotation.x=REDUCED_MOTION?0:Math.sin(t*.17)*.012;
-    farStars.rotation.y=REDUCED_MOTION?0:t*.003;
-    nearStars.rotation.y=REDUCED_MOTION?0:-t*.005;
+    farStars.rotation.y=REDUCED_MOTION?0:t*.0024;
+    nearStars.rotation.y=REDUCED_MOTION?0:-t*.0042;
+    farStars.material.opacity=(MOBILE?.48:.52)+(REDUCED_MOTION?0:Math.sin(t*.22)*.055);
+    nearStars.material.opacity=(MOBILE?.65:.70)+(REDUCED_MOTION?0:Math.sin(t*.47+1.2)*.075);
     glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
     updateFlowTrails(t);
     flowGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.12)*.045;
