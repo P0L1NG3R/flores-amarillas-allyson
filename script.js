@@ -384,8 +384,9 @@
     blending: THREE.AdditiveBlending,
     depthWrite: false
   }));
-  bloomGlow.position.z = -0.28;
-  bloomGlow.scale.set(MOBILE ? 3.0 : 3.45, MOBILE ? 3.0 : 3.45, 1);
+  bloomGlow.position.z = -0.34;
+  bloomGlow.scale.set(MOBILE ? 3.35 : 3.90, MOBILE ? 3.35 : 3.90, 1);
+  bloomGlow.renderOrder = 28;
   centralBloom.add(bloomGlow);
 
   const petalShape = new THREE.Shape();
@@ -472,6 +473,12 @@
     centralBloom.add(seed);
   }
 
+  // El elemento central siempre se dibuja por encima de las decoraciones flotantes.
+  centralBloom.traverse(obj => {
+    if (obj.isMesh || obj.isSprite || obj.isPoints) obj.renderOrder = Math.max(obj.renderOrder || 0, 30);
+  });
+  bloomCenter.renderOrder = 32;
+
   /* Holograma floral dorado: aparece en entradas, morphs y momentos especiales. */
   const hologramGroup = new THREE.Group();
   hologramGroup.position.set(0, 0.18, 0.18);
@@ -554,6 +561,9 @@
   holoRingA.rotation.x = Math.PI / 2.5;
   holoRingB.rotation.x = -Math.PI / 2.8;
   hologramGroup.add(holoRingA, holoRingB);
+  hologramGroup.traverse(obj => {
+    if (obj.isMesh || obj.isSprite || obj.isPoints) obj.renderOrder = 29;
+  });
   hologramGroup.visible = false;
 
   /* Corrientes de luz: profundidad 3D sin anillos ni efecto planeta. */
@@ -736,13 +746,15 @@
   const morph = new THREE.Points(morphGeo, new THREE.PointsMaterial({
     map: particleTexture(),
     vertexColors: true,
-    size: MOBILE ? 0.075 : 0.058,
+    size: MOBILE ? 0.082 : 0.064,
     transparent: true,
-    opacity: 0.92,
-    alphaTest: 0.025,
+    opacity: 0.98,
+    alphaTest: 0.022,
     depthWrite: false,
     blending: THREE.AdditiveBlending
   }));
+  morph.scale.setScalar(MOBILE ? 1.045 : 1.10);
+  morph.renderOrder = 31;
   universe.add(morph);
 
   /* Flores decorativas 3D: girasoles y flores amarillas intercalados. */
@@ -821,14 +833,22 @@
   const wrapMat = new THREE.MeshPhongMaterial({color:0xf0c84b,emissive:0x6b4500,emissiveIntensity:.14,shininess:90});
 
   const FLOATING_FLOWER_MODELS = [
-    {src:"assets/floating-flower-1.webp",type:"bouquet",visualScale:MOBILE?.53:.66},
-    {src:"assets/floating-flower-2.webp",type:"single",visualScale:MOBILE?.58:.72},
-    {src:"assets/floating-flower-3.webp",type:"cluster",visualScale:MOBILE?.55:.69}
+    {src:"assets/floating-flower-1.webp",type:"bouquet",visualScale:MOBILE?.43:.54},
+    {src:"assets/floating-flower-2.webp",type:"single",visualScale:MOBILE?.49:.61},
+    {src:"assets/floating-flower-3.webp",type:"cluster",visualScale:MOBILE?.45:.57}
   ];
 
   const floatingModelLoader=new THREE.TextureLoader();
   const floatingModelTextures=FLOATING_FLOWER_MODELS.map(model=>{
-    const tex=floatingModelLoader.load(model.src);
+    const tex=floatingModelLoader.load(
+      model.src,
+      loaded=>{
+        loaded.colorSpace=THREE.SRGBColorSpace;
+        loaded.needsUpdate=true;
+      },
+      undefined,
+      err=>console.error("No se pudo cargar la flor flotante:",model.src,err)
+    );
     tex.colorSpace=THREE.SRGBColorSpace;
     tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
     tex.magFilter=THREE.LinearFilter;
@@ -842,66 +862,72 @@
     const texture=floatingModelTextures[modelIndex%floatingModelTextures.length];
     const g=new THREE.Group();
 
-    // La imagen enviada por el usuario es ahora el modelo visual principal.
     const flowerMaterial=new THREE.MeshBasicMaterial({
       map:texture,
       transparent:true,
-      alphaTest:.018,
+      alphaTest:.024,
       depthWrite:false,
       depthTest:true,
       side:THREE.DoubleSide,
       toneMapped:false,
-      opacity:.985
+      opacity:.94
     });
     const card=new THREE.Mesh(floatingModelPlaneGeo,flowerMaterial);
-    const size=model.type==="single" ? 1.48 : model.type==="bouquet" ? 1.66 : 1.60;
+    const size=model.type==="single" ? 1.46 : model.type==="bouquet" ? 1.61 : 1.56;
     card.scale.set(size,size,1);
-    card.position.z=.055;
+    card.position.z=.035;
+    card.renderOrder=8;
     g.add(card);
 
-    // Una segunda lámina muy tenue aporta profundidad sin sustituir la imagen original.
-    const depthCard=new THREE.Mesh(
-      floatingModelPlaneGeo,
-      flowerMaterial.clone()
-    );
-    depthCard.material.opacity=.13;
+    // Una lámina secundaria muy suave conserva sensación de volumen sin duplicar visualmente la flor.
+    const depthMaterial=flowerMaterial.clone();
+    depthMaterial.opacity=.075;
+    const depthCard=new THREE.Mesh(floatingModelPlaneGeo,depthMaterial);
     depthCard.scale.set(size*.965,size*.965,1);
-    depthCard.position.z=-.035;
-    depthCard.rotation.y=(index%2?1:-1)*.20;
+    depthCard.position.z=-.045;
+    depthCard.rotation.y=(index%2?1:-1)*.15;
+    depthCard.renderOrder=7;
     g.add(depthCard);
 
-    const halo=new THREE.Sprite(new THREE.SpriteMaterial({
+    const haloMaterial=new THREE.SpriteMaterial({
       map:glowTexture(),
       color:model.type==="single"?0xffd85d:0xffcc3e,
       transparent:true,
-      opacity:MOBILE?.065:.095,
+      opacity:MOBILE?.050:.072,
       depthWrite:false,
       blending:THREE.AdditiveBlending
-    }));
-    halo.position.z=-.16;
-    const haloSize=model.type==="single"?1.82:2.05;
+    });
+    const halo=new THREE.Sprite(haloMaterial);
+    halo.position.z=-.18;
+    const haloSize=model.type==="single"?1.72:1.92;
     halo.scale.set(haloSize,haloSize,1);
+    halo.renderOrder=6;
     g.add(halo);
 
     g.userData.modelType=model.type;
     g.userData.modelIndex=modelIndex%FLOATING_FLOWER_MODELS.length;
     g.userData.visualScale=model.visualScale;
+    g.userData.fadeMaterials=[
+      {material:flowerMaterial,base:.94},
+      {material:depthMaterial,base:.075},
+      {material:haloMaterial,base:MOBILE?.050:.072}
+    ];
     return g;
   }
 
-  /* Usa directamente los tres modelos visuales enviados por el usuario. */
-  const floatingCount=MOBILE?(LOW_MEMORY?10:12):20;
+  // Mantiene el universo floral rico, pero despeja una zona de seguridad alrededor del centro.
+  const floatingCount=MOBILE?(LOW_MEMORY?10:12):18;
   for(let i=0;i<floatingCount;i++){
     const modelIndex=i%FLOATING_FLOWER_MODELS.length;
     const g=makeFloatingBloom(modelIndex,i);
     const type=g.userData.modelType;
     const a=((i+.45)/floatingCount)*Math.PI*2+.22;
-    const r=(MOBILE?3.20:3.38)+(i%4)*(MOBILE?.38:.53);
-    const y=-1.68+(i%7)*(MOBILE?.52:.56);
-    const front=i%5===0?(MOBILE?.46:.78):0;
-    const baseScale=g.userData.visualScale+(i%3)*.016;
+    const r=(MOBILE?3.60:3.95)+(i%4)*(MOBILE?.42:.58);
+    const y=-1.78+(i%7)*(MOBILE?.54:.59);
+    const front=i%6===0?(MOBILE?.10:.16):0;
+    const baseScale=g.userData.visualScale+(i%3)*.014;
 
-    g.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.60+front);
+    g.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.58-.34+front);
     g.scale.setScalar(baseScale);
     flowerGroup.add(g);
 
@@ -909,7 +935,7 @@
       g,y,baseX:g.position.x,baseZ:g.position.z,baseScale,
       modelType:type,modelIndex,
       phase:i*.83,speed:.11+(i%4)*.018,
-      tilt:(i%2?1:-1)*(.035+(i%3)*.012)
+      tilt:(i%2?1:-1)*(.030+(i%3)*.010)
     });
   }
 
@@ -1024,8 +1050,9 @@
       color:0xffd83d,transparent:true,opacity:.34,side:THREE.DoubleSide,blending:THREE.AdditiveBlending
     }));
     const card = new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({
-      map:tex,side:THREE.DoubleSide,toneMapped:false
+      map:tex,side:THREE.DoubleSide,toneMapped:false,transparent:true,opacity:.92,depthWrite:false
     }));
+    card.renderOrder=5;
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(w*.985,h*.985),new THREE.MeshBasicMaterial({
       color:0xfff4cc,transparent:true,opacity:.045,side:THREE.DoubleSide,
       blending:THREE.AdditiveBlending,depthWrite:false
@@ -1046,18 +1073,19 @@
     edge.position.z=.022;
     card.add(photoHalo, backing, frame, glass, edge);
 
-    const a=i/SCENE_PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.25:3.25)+(i%2)*(MOBILE?.82:1.35), y=-1.15+(i%5)*.68;
-    card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.74);
+    const a=i/SCENE_PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.72:4.02)+(i%2)*(MOBILE?.88:1.28), y=-1.28+(i%5)*.72;
+    card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.70-.28);
     card.rotation.y=-a+Math.PI/2;
     photoGroup.add(card);
     photoData.push({
       card,y,phase:i*.8,baseX:card.position.x,baseZ:card.position.z,
-      baseRY:card.rotation.y,glass,photoHalo,edge
+      baseRY:card.rotation.y,glass,photoHalo,edge,backing,frame,
+      baseCardOpacity:.92,baseBackingOpacity:.62,baseFrameOpacity:.34
     });
   }));
 
   let shapeIndex=0,nextShape=1;
-  const HOLD=6500, MORPH=4200;
+  const HOLD=6500, MORPH=4200, UI_SWITCH=.52;
 
   function showFinale(){
     if (finaleShown || !finale) return;
@@ -1067,19 +1095,34 @@
     requestAnimationFrame(() => finale.classList.add("show"));
   }
 
-  function setShapeUI(i){
-    shapeLabel.style.opacity="0";
-    shapeLabel.style.transform="translateY(5px)";
+  let displayedShapeIndex=0;
+  let uiTimer=null;
+  function setShapeUI(i,immediate=false){
+    if(i===displayedShapeIndex && !immediate) return;
+    displayedShapeIndex=i;
+    if(uiTimer) clearTimeout(uiTimer);
 
-    setTimeout(()=>{
+    const apply=()=>{
       shapeLabel.textContent=SHAPE_LABELS[i];
       heroTitle.textContent=HERO_TITLES[i];
       shapeLabel.style.opacity="1";
       shapeLabel.style.transform="translateY(0)";
-    },180);
+      heroTitle.style.opacity="1";
+      heroTitle.style.transform="translateY(0)";
+    };
 
+    if(immediate){
+      apply();
+    }else{
+      shapeLabel.style.opacity="0";
+      shapeLabel.style.transform="translateY(5px)";
+      heroTitle.style.opacity="0";
+      heroTitle.style.transform="translateY(7px)";
+      uiTimer=setTimeout(apply,190);
+    }
     dots.forEach((d,j)=>d.classList.toggle("on",j===i));
   }
+  setShapeUI(0,true);
 
   let targetRY=0,targetRX=-.035,ry=0,rx=-.035,drag=false,lastX=0,lastY=0,pinch=0;
   canvas.addEventListener("pointerdown",e=>{drag=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture?.(e.pointerId)});
@@ -1120,22 +1163,25 @@
     camera.position.y=.05+Math.cos(t*.27)*(MOBILE?.018:.05)-pointerNY*(MOBILE?.035:.10);
     camera.lookAt(pointerNX*(MOBILE?.025:.07),-.15-pointerNY*(MOBILE?.018:.045),0);
 
+    let phaseLocal=now-morphStart;
     if(experienceStarted && !storyPaused){
-      const elapsed=now-morphStart;
-      const local=now-morphStart;
-
-      if(shapeIndex===4 && !finaleShown && local>5200){
-        showFinale();
-      }
-
-      if(!storyPaused && elapsed>HOLD+MORPH){
+      if(phaseLocal>=HOLD+MORPH){
         shapeIndex=nextShape;
         nextShape=(nextShape+1)%targets.length;
         morphStart=now;
-        setShapeUI(shapeIndex);
+        phaseLocal=0;
+        // Si el navegador saltó frames, fuerza el UI correcto del nuevo estado.
+        setShapeUI(shapeIndex,true);
       }
-      if(!storyPaused && local>HOLD){
-        const raw=Math.min(1,(local-HOLD)/MORPH);
+
+      if(shapeIndex===4 && !finaleShown && phaseLocal>5200){
+        showFinale();
+      }
+
+      if(!storyPaused && phaseLocal>HOLD){
+        const raw=Math.min(1,(phaseLocal-HOLD)/MORPH);
+        // El texto cambia cerca del punto medio, cuando la nueva forma ya domina visualmente.
+        setShapeUI(raw>=UI_SWITCH ? nextShape : shapeIndex);
         const from=targets[shapeIndex],to=targets[nextShape],pos=morph.geometry.attributes.position.array;
         for(let i=0;i<PARTICLES;i++){
           const j=i*3;
@@ -1153,10 +1199,11 @@
           pos[j+2]=mz+Math.cos(phase*1.7)*arc*(MOBILE?0.10:0.16);
         }
         morph.geometry.attributes.position.needsUpdate=true;
+      }else if(!storyPaused){
+        setShapeUI(shapeIndex);
       }
     }
 
-    const phaseLocal=now-morphStart;
     const transitionRaw=phaseLocal>HOLD ? Math.min(1,(phaseLocal-HOLD)/MORPH) : 0;
     const transitionQ=transitionRaw>0 ? smooth(transitionRaw) : 0;
     transitionEnergy=transitionRaw>0 ? Math.sin(transitionRaw*Math.PI) : 0;
@@ -1168,9 +1215,10 @@
     // La flor abre y respira; durante el morph sus petalos parecen soltarse hacia las particulas.
     const bloomBreath=REDUCED_MOTION?1:1+Math.sin(t*1.25)*0.018;
     centralBloom.visible=flowerVisibility>0.012;
-    centralBloom.scale.setScalar(bloomBreath*(0.58+flowerVisibility*0.42));
+    const centralFocusScale=MOBILE?1.10:1.16;
+    centralBloom.scale.setScalar(centralFocusScale*bloomBreath*(0.60+flowerVisibility*0.40));
     centralBloom.position.y=0.18+(REDUCED_MOTION?0:Math.sin(t*.86)*0.025);
-    bloomGlow.material.opacity=(0.05+flowerVisibility*0.13)+(REDUCED_MOTION?0:Math.sin(t*1.1)*0.012);
+    bloomGlow.material.opacity=(0.075+flowerVisibility*0.17)+(REDUCED_MOTION?0:Math.sin(t*1.1)*0.014);
     bloomLight.intensity=(MOBILE?0.72:0.94)+flowerVisibility*(MOBILE?0.38:0.52);
     bloomCenter.material.emissiveIntensity=0.20+flowerVisibility*0.24;
     bloomCenter.material.opacity=0.08+flowerVisibility*0.92;
@@ -1192,7 +1240,7 @@
 
     const holoAlpha = REDUCED_MOTION
       ? 0
-      : THREE.MathUtils.clamp(entryEnergy*.42 + transitionEnergy*.56 + secretPulse*.32 + finaleEnergy*.20,0,.82);
+      : THREE.MathUtils.clamp(entryEnergy*.34 + transitionEnergy*.70 + secretPulse*.30 + finaleEnergy*.18,0,.84);
     hologramGroup.visible = holoAlpha > .012;
     hologramGroup.position.y = centralBloom.position.y;
     hologramGroup.rotation.z = t*.055;
@@ -1263,14 +1311,24 @@
       o.g.position.x=o.baseX+sway;
       o.g.position.z=o.baseZ+depth;
 
-      // Compensa gran parte del giro del universo para que la flor siga legible,
-      // pero conserva una inclinacion sutil que deja ver su volumen 3D.
-      o.g.rotation.y=-ry+(REDUCED_MOTION?0:Math.sin(t*.13+o.phase)*.08);
-      o.g.rotation.x=-rx+(REDUCED_MOTION?0:Math.cos(t*.11+o.phase)*.045);
-      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.17+o.phase)*.045);
+      // Mantiene las flores legibles, pero evita que crucen agresivamente el foco central.
+      o.g.rotation.y=-ry+(REDUCED_MOTION?0:Math.sin(t*.13+o.phase)*.07);
+      o.g.rotation.x=-rx+(REDUCED_MOTION?0:Math.cos(t*.11+o.phase)*.040);
+      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.17+o.phase)*.038);
 
-      const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.31+o.phase)*.025))*(secretPulse>0?1+secretPulse*.20:1);
-      o.g.scale.setScalar(o.baseScale*pulse);
+      const focusDist=Math.hypot(o.g.position.x,o.g.position.y*.62);
+      const safeRadius=MOBILE?2.58:3.10;
+      const focusMask=THREE.MathUtils.clamp(1-focusDist/safeRadius,0,1);
+      const frontness=THREE.MathUtils.clamp((o.g.position.z+.20)/1.05,0,1);
+      const hideFactor=focusMask*(.42+.58*frontness);
+      o.g.position.z-=hideFactor*(MOBILE?.72:1.02);
+
+      const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.31+o.phase)*.022))*(secretPulse>0?1+secretPulse*.17:1);
+      const protectedScale=1-hideFactor*.31;
+      o.g.scale.setScalar(o.baseScale*pulse*protectedScale);
+      o.g.userData.fadeMaterials?.forEach(entry=>{
+        entry.material.opacity=entry.base*(1-hideFactor*.74);
+      });
     });
     pollen.rotation.y=REDUCED_MOTION?0:t*.012;
     pollen.position.y=REDUCED_MOTION?0:Math.sin(t*.27)*.04;
@@ -1281,15 +1339,24 @@
       o.s.material.opacity=.82+(Math.sin(t*.58+o.phase)+1)*.065;
     });
     photoData.forEach(o=>{
-      o.card.position.y=o.y+Math.sin(t*.58+o.phase)*.09-pointerNY*(MOBILE?.015:.035);
-      o.card.position.x=o.baseX+pointerNX*(MOBILE?.025:.065)+Math.sin(t*.18+o.phase)*.022;
-      o.card.position.z=o.baseZ+Math.cos(t*.16+o.phase)*.025;
-      o.card.rotation.y=o.baseRY+pointerNX*(MOBILE?.018:.045)+Math.sin(t*.22+o.phase)*.018;
-      o.card.rotation.x=-pointerNY*(MOBILE?.012:.032)+Math.cos(t*.19+o.phase)*.010;
-      o.card.rotation.z=Math.sin(t*.35+o.phase)*.025;
-      o.glass.material.opacity=.035+(Math.sin(t*.82+o.phase)+1)*.018+transitionEnergy*.025;
-      o.photoHalo.material.opacity=(MOBILE?.045:.07)+(Math.sin(t*.43+o.phase)+1)*.018+finaleEnergy*.025;
-      o.edge.material.opacity=.48+(Math.sin(t*.61+o.phase)+1)*.10;
+      o.card.position.y=o.y+Math.sin(t*.58+o.phase)*.085-pointerNY*(MOBILE?.012:.030);
+      o.card.position.x=o.baseX+pointerNX*(MOBILE?.020:.052)+Math.sin(t*.18+o.phase)*.020;
+      const rawZ=o.baseZ+Math.cos(t*.16+o.phase)*.022;
+      const focusDist=Math.hypot(o.card.position.x,o.card.position.y*.64);
+      const focusMask=THREE.MathUtils.clamp(1-focusDist/(MOBILE?2.75:3.28),0,1);
+      const frontness=THREE.MathUtils.clamp((rawZ+.12)/1.15,0,1);
+      const focusFade=focusMask*(.40+.60*frontness);
+      o.card.position.z=rawZ-focusFade*(MOBILE?.62:.90);
+      o.card.rotation.y=o.baseRY+pointerNX*(MOBILE?.016:.038)+Math.sin(t*.22+o.phase)*.016;
+      o.card.rotation.x=-pointerNY*(MOBILE?.010:.027)+Math.cos(t*.19+o.phase)*.009;
+      o.card.rotation.z=Math.sin(t*.35+o.phase)*.021;
+      o.card.scale.setScalar(1-focusFade*.25);
+      o.card.material.opacity=o.baseCardOpacity*(1-focusFade*.62);
+      o.backing.material.opacity=o.baseBackingOpacity*(1-focusFade*.58);
+      o.frame.material.opacity=o.baseFrameOpacity*(1-focusFade*.56);
+      o.glass.material.opacity=(.030+(Math.sin(t*.82+o.phase)+1)*.014+transitionEnergy*.018)*(1-focusFade*.58);
+      o.photoHalo.material.opacity=((MOBILE?.040:.060)+(Math.sin(t*.43+o.phase)+1)*.014+finaleEnergy*.020)*(1-focusFade*.72);
+      o.edge.material.opacity=(.44+(Math.sin(t*.61+o.phase)+1)*.08)*(1-focusFade*.55);
     });
 
     renderer.render(scene,camera);
