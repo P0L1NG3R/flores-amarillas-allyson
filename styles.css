@@ -484,3 +484,72 @@ body::after{
 
 /* v7: el recuerdo flotante fue eliminado del DOM. */
 .memory-spotlight{display:none!important}
+
+
+/* === Cinematic 3D / holographic layer v17 === */
+.cinematic-flare{
+  position:fixed;
+  inset:-20%;
+  z-index:2;
+  pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(255,228,113,.16) 0,rgba(255,190,0,.08) 18%,transparent 48%),
+    conic-gradient(from 0deg at 50% 50%,transparent 0 34%,rgba(255,220,99,.045) 41%,transparent 48% 82%,rgba(255,197,26,.035) 89%,transparent 96%);
+  mix-blend-mode:screen;
+  transform:scale(.82) rotate(0deg);
+  transition:opacity .8s ease;
+  filter:blur(1px)
+}
+body.experience-active .cinematic-flare{
+  opacity:.62;
+  animation:cinematicFlare 14s linear infinite
+}
+
+.holo-scanlines{
+  position:fixed;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+  background:repeating-linear-gradient(
+    180deg,
+    transparent 0 4px,
+    rgba(255,232,144,.014) 5px,
+    transparent 6px 9px
+  );
+  mix-blend-mode:screen;
+  transition:opacity 1s ease
+}
+body.experience-active .holo-scanlines{opacity:.48;animation:holoScan 9s linear infinite}
+
+#galaxy{
+  transition:filter 1.2s ease;
+  filter:saturate(1.08) contrast(1.025)
+}
+body.experience-active #galaxy{
+  filter:saturate(1.18) contrast(1.045)
+}
+
+body.experience-active .hero-copy strong{
+  text-shadow:0 0 14px rgba(255,218,83,.18),0 0 42px rgba(255,182,0,.10)
+}
+
+body.experience-active .brand-mark,
+body.experience-active .round-btn{
+  box-shadow:0 0 18px rgba(255,203,51,.12),inset 0 0 18px rgba(255,228,124,.025)
+}
+
+@keyframes cinematicFlare{
+  0%{transform:scale(.82) rotate(0deg)}
+  50%{transform:scale(1.04) rotate(180deg)}
+  100%{transform:scale(.82) rotate(360deg)}
+}
+@keyframes holoScan{
+  from{transform:translateY(-18px)}
+  to{transform:translateY(18px)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .cinematic-flare,.holo-scanlines{animation:none!important}
+}
