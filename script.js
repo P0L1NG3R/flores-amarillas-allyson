@@ -52,6 +52,12 @@
   let finaleShown = false;
   let storyPaused = false;
   let secretPulse = 0;
+  let entryEnergy = 0;
+  let transitionEnergy = 0;
+  let finaleEnergy = 0;
+  let cinematicStart = -Infinity;
+  let pointerNX = 0;
+  let pointerNY = 0;
 
   function openLetter() {
     letter.classList.add("show");
@@ -208,7 +214,10 @@
     if (experienceStarted) return;
     experienceStarted = true;
     morphStart = performance.now();
-    burst = 1;
+    cinematicStart = performance.now();
+    entryEnergy = 1;
+    burst = 1.35;
+    document.body.classList.add("experience-active");
     if (startBtn) {
       startBtn.disabled = true;
       const txt = startBtn.querySelector("span");
@@ -267,6 +276,10 @@
   }
   resize();
   addEventListener("resize", resize);
+  addEventListener("pointermove", e => {
+    pointerNX = THREE.MathUtils.clamp((e.clientX / Math.max(1, innerWidth)) * 2 - 1, -1, 1);
+    pointerNY = THREE.MathUtils.clamp((e.clientY / Math.max(1, innerHeight)) * 2 - 1, -1, 1);
+  }, {passive:true});
 
   function pointsObject(points, size, color, opacity) {
     const a = new Float32Array(points.length * 3);
@@ -428,6 +441,90 @@
     seed.position.set(Math.cos(a) * r, Math.sin(a) * r, 0.405 - r * 0.11);
     centralBloom.add(seed);
   }
+
+  /* Holograma floral dorado: aparece en entradas, morphs y momentos especiales. */
+  const hologramGroup = new THREE.Group();
+  hologramGroup.position.set(0, 0.18, 0.18);
+  universe.add(hologramGroup);
+
+  const holoUniforms = {
+    uTime: {value: 0},
+    uAlpha: {value: 0}
+  };
+  const holoPetalMaterial = new THREE.ShaderMaterial({
+    uniforms: holoUniforms,
+    vertexShader: `
+      uniform float uTime;
+      varying vec3 vNormalV;
+      varying vec3 vView;
+      varying float vPulse;
+      void main(){
+        vec3 p = position;
+        float wave = sin(position.y * 10.0 + uTime * 3.1) * 0.012;
+        p.z += wave;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        vNormalV = normalize(normalMatrix * normal);
+        vView = normalize(-mv.xyz);
+        vPulse = 0.5 + 0.5 * sin(position.y * 13.0 - uTime * 4.0);
+        gl_Position = projectionMatrix * mv;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uAlpha;
+      varying vec3 vNormalV;
+      varying vec3 vView;
+      varying float vPulse;
+      void main(){
+        float fresnel = pow(1.0 - abs(dot(normalize(vNormalV), normalize(vView))), 1.55);
+        float scan = 0.58 + 0.42 * sin(gl_FragCoord.y * 0.19 - uTime * 7.0);
+        float flicker = 0.86 + 0.14 * sin(uTime * 11.0 + gl_FragCoord.x * 0.025);
+        vec3 amber = vec3(1.0, 0.53, 0.02);
+        vec3 gold = vec3(1.0, 0.95, 0.52);
+        vec3 col = mix(amber, gold, clamp(fresnel + vPulse * 0.22, 0.0, 1.0));
+        float alpha = (0.11 + fresnel * 0.78) * (0.72 + scan * 0.28) * flicker * uAlpha;
+        gl_FragColor = vec4(col, alpha);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+  });
+
+  const holoPetalCount = MOBILE ? 12 : 18;
+  for (let i = 0; i < holoPetalCount; i++) {
+    const a = i / holoPetalCount * Math.PI * 2;
+    const p = new THREE.Mesh(petalGeo, holoPetalMaterial);
+    p.scale.set(MOBILE ? 0.52 : 0.58, MOBILE ? 0.72 : 0.82, 0.9);
+    p.position.set(Math.cos(a) * (MOBILE ? 0.61 : 0.69), Math.sin(a) * (MOBILE ? 0.61 : 0.69), 0.02);
+    p.rotation.z = a - Math.PI / 2;
+    p.rotation.x = 0.24 + Math.sin(a) * 0.08;
+    hologramGroup.add(p);
+  }
+
+  const holoCenterMaterial = new THREE.MeshBasicMaterial({
+    color:0xffb51f, wireframe:true, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const holoCenter = new THREE.Mesh(
+    new THREE.SphereGeometry(MOBILE ? 0.36 : 0.42, MOBILE ? 10 : 16, MOBILE ? 8 : 12),
+    holoCenterMaterial
+  );
+  holoCenter.scale.z = 0.55;
+  holoCenter.position.z = 0.19;
+  hologramGroup.add(holoCenter);
+
+  const holoRingMaterial = new THREE.MeshBasicMaterial({
+    color:0xffdb55, wireframe:true, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const holoRingA = new THREE.Mesh(new THREE.TorusGeometry(MOBILE ? 1.02 : 1.14, 0.009, 4, MOBILE ? 48 : 88), holoRingMaterial);
+  const holoRingB = new THREE.Mesh(new THREE.TorusGeometry(MOBILE ? 1.30 : 1.48, 0.007, 4, MOBILE ? 48 : 88), holoRingMaterial.clone());
+  holoRingA.rotation.x = Math.PI / 2.5;
+  holoRingB.rotation.x = -Math.PI / 2.8;
+  hologramGroup.add(holoRingA, holoRingB);
+  hologramGroup.visible = false;
 
   /* Corrientes de luz: profundidad 3D sin anillos ni efecto planeta. */
   const flowGroup = new THREE.Group();
@@ -634,6 +731,34 @@
         bevelThickness: 0.008
       });
   decoPetalGeo.center();
+
+  /* Túnel de pétalos GPU: entrada y transiciones sin disparar draw calls. */
+  const PETAL_STORM_COUNT = MOBILE ? (LOW_MEMORY ? 42 : 72) : 150;
+  const petalStormMaterial = new THREE.MeshPhongMaterial({
+    color:0xffd43a,
+    emissive:0x8d4d00,
+    emissiveIntensity:.30,
+    shininess:90,
+    transparent:true,
+    opacity:0,
+    side:THREE.DoubleSide,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  const petalStorm = new THREE.InstancedMesh(decoPetalGeo, petalStormMaterial, PETAL_STORM_COUNT);
+  petalStorm.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  petalStorm.frustumCulled = false;
+  petalStorm.visible = false;
+  scene.add(petalStorm);
+
+  const stormDummy = new THREE.Object3D();
+  const stormData = Array.from({length: PETAL_STORM_COUNT}, (_, i) => ({
+    seed: (i * 0.61803398875) % 1,
+    phase: i * 1.731,
+    radius: 0.7 + ((i * 37) % 100) / 100 * (MOBILE ? 2.3 : 3.8),
+    speed: 0.55 + ((i * 19) % 70) / 100,
+    scale: 0.055 + ((i * 11) % 60) / 1000
+  }));
 
   const decoCenterGeo = new THREE.SphereGeometry(0.28, MOBILE ? 10 : 14, MOBILE ? 7 : 10);
   const decoStemGeo = new THREE.CylinderGeometry(0.022, 0.032, 1.0, MOBILE ? 6 : 8);
@@ -847,19 +972,44 @@
     else { h=Math.min(1.4,base*1.28); w=h*ratio; }
     w=Math.max(w,.64); h=Math.max(h,.78);
 
-    const frame = new THREE.Mesh(new THREE.PlaneGeometry(w+.07,h+.07),new THREE.MeshBasicMaterial({
-      color:0xffd83d,transparent:true,opacity:.52,side:THREE.DoubleSide,blending:THREE.AdditiveBlending
+    const backing = new THREE.Mesh(new THREE.PlaneGeometry(w+.14,h+.14),new THREE.MeshPhysicalMaterial({
+      color:0x4a3608,metalness:.52,roughness:.24,clearcoat:1,clearcoatRoughness:.18,
+      transparent:true,opacity:.62,side:THREE.DoubleSide
+    }));
+    const frame = new THREE.Mesh(new THREE.PlaneGeometry(w+.075,h+.075),new THREE.MeshBasicMaterial({
+      color:0xffd83d,transparent:true,opacity:.34,side:THREE.DoubleSide,blending:THREE.AdditiveBlending
     }));
     const card = new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({
       map:tex,side:THREE.DoubleSide,toneMapped:false
     }));
-    card.add(frame);
-    frame.position.z=-.014;
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(w*.985,h*.985),new THREE.MeshBasicMaterial({
+      color:0xfff4cc,transparent:true,opacity:.045,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    }));
+    const edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(w+.11,h+.11)),
+      new THREE.LineBasicMaterial({color:0xffe477,transparent:true,opacity:.62,blending:THREE.AdditiveBlending})
+    );
+    const photoHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:glowTexture(),color:0xffc72e,transparent:true,opacity:MOBILE?.055:.085,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    }));
+    photoHalo.scale.set(w*1.85,h*1.85,1);
+    photoHalo.position.z=-.08;
+    backing.position.z=-.038;
+    frame.position.z=-.020;
+    glass.position.z=.012;
+    edge.position.z=.022;
+    card.add(photoHalo, backing, frame, glass, edge);
+
     const a=i/SCENE_PHOTOS.length*Math.PI*2+.25, r=(MOBILE?3.25:3.25)+(i%2)*(MOBILE?.82:1.35), y=-1.15+(i%5)*.68;
     card.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.74);
     card.rotation.y=-a+Math.PI/2;
     photoGroup.add(card);
-    photoData.push({card,y,phase:i*.8});
+    photoData.push({
+      card,y,phase:i*.8,baseX:card.position.x,baseZ:card.position.z,
+      baseRY:card.rotation.y,glass,photoHalo,edge
+    });
   }));
 
   let shapeIndex=0,nextShape=1;
@@ -919,10 +1069,16 @@
     universe.rotation.y=ry;
     universe.rotation.x=rx;
 
-    camera.position.z+=(cameraZTarget-camera.position.z)*.075;
-    camera.position.x=Math.sin(t*.22)*(MOBILE?.03:.13);
-    camera.position.y=.05+Math.cos(t*.27)*(MOBILE?.018:.05);
-    camera.lookAt(0,-.15,0);
+    const introRaw = experienceStarted
+      ? THREE.MathUtils.clamp((now - cinematicStart) / 2800, 0, 1)
+      : 1;
+    const introBoost = experienceStarted ? 1 - smooth(introRaw) : 0;
+    entryEnergy = experienceStarted ? Math.max(0, 1 - smooth(THREE.MathUtils.clamp((now-cinematicStart)/3300,0,1))) : 0;
+    const cinematicZ = cameraZTarget + introBoost * (MOBILE ? 3.0 : 4.1);
+    camera.position.z+=(cinematicZ-camera.position.z)*.075;
+    camera.position.x=Math.sin(t*.22)*(MOBILE?.03:.13)+pointerNX*(MOBILE?.055:.16);
+    camera.position.y=.05+Math.cos(t*.27)*(MOBILE?.018:.05)-pointerNY*(MOBILE?.035:.10);
+    camera.lookAt(pointerNX*(MOBILE?.025:.07),-.15-pointerNY*(MOBILE?.018:.045),0);
 
     if(experienceStarted && !storyPaused){
       const elapsed=now-morphStart;
@@ -961,7 +1117,10 @@
     }
 
     const phaseLocal=now-morphStart;
-    const transitionQ=phaseLocal>HOLD ? smooth(Math.min(1,(phaseLocal-HOLD)/MORPH)) : 0;
+    const transitionRaw=phaseLocal>HOLD ? Math.min(1,(phaseLocal-HOLD)/MORPH) : 0;
+    const transitionQ=transitionRaw>0 ? smooth(transitionRaw) : 0;
+    transitionEnergy=transitionRaw>0 ? Math.sin(transitionRaw*Math.PI) : 0;
+    finaleEnergy=shapeIndex===4 ? smooth(THREE.MathUtils.clamp((phaseLocal-1150)/2300,0,1)) : 0;
     const flowerVisibility=
       shapeIndex===0 ? 1-transitionQ :
       nextShape===0 ? transitionQ : 0;
@@ -990,6 +1149,56 @@
       o.petal.rotation.x=o.baseTilt+Math.sin(o.angle)*0.08+(REDUCED_MOTION?0:Math.sin(t*.55+o.phase)*0.025);
       o.petal.rotation.y=Math.cos(o.angle)*0.07+(REDUCED_MOTION?0:Math.sin(t*.43+o.phase)*0.022);
     });
+
+    const holoAlpha = REDUCED_MOTION
+      ? 0
+      : THREE.MathUtils.clamp(entryEnergy*.72 + transitionEnergy*.92 + secretPulse*.55 + finaleEnergy*.28,0,1);
+    hologramGroup.visible = holoAlpha > .012;
+    hologramGroup.position.y = centralBloom.position.y;
+    hologramGroup.rotation.z = t*.16;
+    hologramGroup.rotation.y = Math.sin(t*.55)*.14;
+    const holoScale = 1 + transitionEnergy*.18 + entryEnergy*.12 + secretPulse*.12;
+    hologramGroup.scale.setScalar(holoScale);
+    holoPetalMaterial.uniforms.uTime.value = t;
+    holoPetalMaterial.uniforms.uAlpha.value = holoAlpha;
+    holoCenterMaterial.opacity = holoAlpha*.48;
+    holoRingA.material.opacity = holoAlpha*.35;
+    holoRingB.material.opacity = holoAlpha*.22;
+    holoRingA.rotation.z = t*.62;
+    holoRingB.rotation.z = -t*.43;
+    holoRingA.scale.setScalar(1+transitionEnergy*.36);
+    holoRingB.scale.setScalar(1+entryEnergy*.52+finaleEnergy*.18);
+    bloomLight.intensity += (transitionEnergy*.38 + entryEnergy*.22 + finaleEnergy*.12);
+
+    const stormEnergy = REDUCED_MOTION
+      ? 0
+      : THREE.MathUtils.clamp(entryEnergy*.98 + transitionEnergy*.82 + finaleEnergy*.34 + secretPulse*.24,0,1);
+    petalStorm.visible = stormEnergy > .012;
+    petalStormMaterial.opacity = stormEnergy*.72;
+    if(petalStorm.visible){
+      stormData.forEach((o,i)=>{
+        const travel=(o.seed+t*(.085+o.speed*.045))%1;
+        const z=5.4-travel*13.2;
+        const vortex=o.phase+t*(.48+o.speed*.22)+travel*4.2;
+        const radial=o.radius*(.56+travel*.82);
+        stormDummy.position.set(
+          Math.cos(vortex)*radial + pointerNX*.18,
+          Math.sin(vortex*1.17)*radial*.54 - pointerNY*.12,
+          z
+        );
+        stormDummy.rotation.set(
+          vortex*.7+t*.4,
+          vortex*1.15-t*.32,
+          vortex+t*.62
+        );
+        const near=Math.sin(Math.PI*travel);
+        const sc=o.scale*(.70+near*.92)*stormEnergy;
+        stormDummy.scale.set(sc,sc*(.80+o.seed*.45),sc);
+        stormDummy.updateMatrix();
+        petalStorm.setMatrixAt(i,stormDummy.matrix);
+      });
+      petalStorm.instanceMatrix.needsUpdate=true;
+    }
 
     if(burst>0){burst*=.92;morph.scale.setScalar(1+burst*.24);glow.material.opacity=.14+burst*.16}
     else{morph.scale.setScalar(1+(REDUCED_MOTION?0:Math.sin(t*1.55)*.012));glow.material.opacity=.105+(REDUCED_MOTION?0:Math.sin(t*.9)*.018)}
@@ -1030,8 +1239,15 @@
       o.s.material.opacity=.82+(Math.sin(t*.58+o.phase)+1)*.065;
     });
     photoData.forEach(o=>{
-      o.card.position.y=o.y+Math.sin(t*.58+o.phase)*.09;
+      o.card.position.y=o.y+Math.sin(t*.58+o.phase)*.09-pointerNY*(MOBILE?.015:.035);
+      o.card.position.x=o.baseX+pointerNX*(MOBILE?.025:.065)+Math.sin(t*.18+o.phase)*.022;
+      o.card.position.z=o.baseZ+Math.cos(t*.16+o.phase)*.025;
+      o.card.rotation.y=o.baseRY+pointerNX*(MOBILE?.018:.045)+Math.sin(t*.22+o.phase)*.018;
+      o.card.rotation.x=-pointerNY*(MOBILE?.012:.032)+Math.cos(t*.19+o.phase)*.010;
       o.card.rotation.z=Math.sin(t*.35+o.phase)*.025;
+      o.glass.material.opacity=.035+(Math.sin(t*.82+o.phase)+1)*.018+transitionEnergy*.025;
+      o.photoHalo.material.opacity=(MOBILE?.045:.07)+(Math.sin(t*.43+o.phase)+1)*.018+finaleEnergy*.025;
+      o.edge.material.opacity=.48+(Math.sin(t*.61+o.phase)+1)*.10;
     });
 
     renderer.render(scene,camera);
