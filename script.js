@@ -117,6 +117,7 @@
         storyPaused = false;
         morphStart = performance.now();
       }
+      if (secretSurprise?.classList.contains("show")) closeSecret();
     }
   });
 
@@ -138,11 +139,16 @@
   function closeSecret(){
     secretSurprise?.classList.remove("show");
     secretSurprise?.setAttribute("aria-hidden", "true");
+    if (!finale?.classList.contains("show") && !letter?.classList.contains("show")) {
+      storyPaused = false;
+      morphStart = performance.now();
+    }
   }
 
   secretName?.addEventListener("click", () => {
     secretPulse = 1;
     burst = Math.max(burst, 1.25);
+    storyPaused = true;
     secretSurprise?.setAttribute("aria-hidden", "false");
     requestAnimationFrame(() => secretSurprise?.classList.add("show"));
   });
