@@ -18,7 +18,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/foto1.jpg">
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="preload" as="image" href="assets/floating-flower-1.webp">
+  <link rel="preload" as="image" href="assets/floating-flower-2.webp">
+  <link rel="preload" as="image" href="assets/floating-flower-3.webp">
+  <link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body>
   <canvas id="galaxy" aria-label="Universo 3D de flores amarillas para Allyson"></canvas>
@@ -29,31 +32,13 @@
 
   <div id="start" class="overlay">
     <div class="intro-card">
-      <div class="intro-topline">
-        <span>Una sorpresa hecha solo para ti</span>
-        <i aria-hidden="true"></i>
-      </div>
-
-      <div class="intro-orbit" aria-hidden="true">
-        <span>✦</span><b>🌻</b><span>✦</span>
-      </div>
-
+      <div class="intro-topline"><span>Una sorpresa hecha solo para ti</span><i aria-hidden="true"></i></div>
+      <div class="intro-orbit" aria-hidden="true"><span>✦</span><b>🌻</b><span>✦</span></div>
       <p class="eyebrow">Un detalle de P0L1NG3R</p>
       <h1>Para <em>Allyson</em><span>💛</span></h1>
-      <p class="intro-copy">
-        Guardé aquí un pedacito de nuestros recuerdos, unas flores amarillas
-        y palabras que quería regalarte de una forma distinta.
-      </p>
-
-      <button id="startBtn" type="button" onclick="window.__allysonEnter && window.__allysonEnter()">
-        <span>Descubrir mi sorpresa</span><i>→</i>
-      </button>
-
-      <div class="intro-footer">
-        <span>♫ Música</span>
-        <span>✦ Recuerdos</span>
-        <span>🌻 Flores</span>
-      </div>
+      <p class="intro-copy">Guardé aquí un pedacito de nuestros recuerdos, unas flores amarillas y palabras que quería regalarte de una forma distinta.</p>
+      <button id="startBtn" type="button" onclick="window.__allysonEnter && window.__allysonEnter()"><span>Descubrir mi sorpresa</span><i>→</i></button>
+      <div class="intro-footer"><span>♫ Música</span><span>✦ Recuerdos</span><span>🌻 Flores</span></div>
       <small>Toca para comenzar la experiencia</small>
     </div>
   </div>
@@ -74,15 +59,9 @@
     <strong id="heroTitle">Todo empieza con una flor que lleva un poquito de ti</strong>
   </div>
 
-  <div class="progress-dots" aria-hidden="true">
-    <i class="on"></i><i></i><i></i><i></i><i></i>
-  </div>
-
+  <div class="progress-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
   <div class="hint"><span>↔</span> Arrastra para explorar <b>·</b> pellizca para acercar</div>
-
-  <button id="letterBtn" class="letter-btn" type="button" aria-label="Abrir carta">
-    <span aria-hidden="true">💌</span><b>Leer mi carta</b>
-  </button>
+  <button id="letterBtn" class="letter-btn" type="button" aria-label="Abrir carta"><span aria-hidden="true">💌</span><b>Leer mi carta</b></button>
 
   <section id="finale" class="finale" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="finaleTitle">
     <div class="finale-card">
@@ -109,31 +88,23 @@
   <section id="letter" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="letterTitle">
     <article>
       <button id="close" type="button" aria-label="Cerrar carta">×</button>
-
       <div class="letter-heading">
         <div class="letter-flower" aria-hidden="true">🌻</div>
         <p class="letter-kicker">Unas palabras que quería dejarte aquí</p>
         <h2 id="letterTitle">Para ti, Allyson <span>💛</span></h2>
         <div class="letter-rule" aria-hidden="true"><i></i><span>✦</span><i></i></div>
       </div>
-
       <div class="letter-copy">
         <p>Hay personas que llegan y, sin darse cuenta, hacen que muchos de tus días sean mejores. Así eres tú para mí.</p>
         <p>Gracias por cada momento compartido, por las risas, por estar ahí incluso en lo simple y por convertir recuerdos pequeños en algo que siempre quiero guardar.</p>
         <p>Quiero que estas flores amarillas te recuerden que eres alguien muy especial para mí. Que tu sonrisa siga iluminando mis días y que nunca nos falten historias nuevas por vivir.</p>
         <p class="letter-highlight">Te elegiría en esta vida y en cada universo donde volvamos a encontrarnos. 🌻✨</p>
       </div>
-
-      <div class="signature">
-        <span>Con cariño,</span>
-        <strong>P0L1NG3R</strong>
-      </div>
+      <div class="signature"><span>Con cariño,</span><strong>P0L1NG3R</strong></div>
     </article>
   </section>
 
-  <noscript>
-    <div class="noscript">Activa JavaScript para poder ver esta sorpresa 🌻</div>
-  </noscript>
+  <noscript><div class="noscript">Activa JavaScript para poder ver esta sorpresa 🌻</div></noscript>
 
   <script>
     window.__allysonEnter = function () {
@@ -143,6 +114,6 @@
     };
   </script>
   <script src="vendor/three.min.js?v=159"></script>
-  <script src="script.js?v=20"></script>
+  <script src="script.js?v=21"></script>
 </body>
 </html>
