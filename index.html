@@ -10,6 +10,7 @@
   <meta property="og:title" content="Flores amarillas para Allyson 🌻">
   <meta property="og:description" content="Un pequeño universo de flores amarillas, recuerdos y palabras creado especialmente para Allyson.">
   <meta property="og:url" content="https://p0l1ng3r.github.io/flores-amarillas-allyson/">
+  <meta property="og:image" content="https://p0l1ng3r.github.io/flores-amarillas-allyson/assets/foto1.jpg">
   <meta name="twitter:card" content="summary">
   <title>Flores amarillas para Allyson 🌻</title>
 
@@ -17,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/foto1.jpg">
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
   <canvas id="galaxy" aria-label="Universo 3D de flores amarillas para Allyson"></canvas>
@@ -68,8 +69,22 @@
 
   <div class="hero-copy">
     <span id="shapeLabel">Una flor para ti 🌻</span>
-    <strong>Un universo hecho de nuestros recuerdos</strong>
+    <strong id="heroTitle">Un universo hecho de nuestros recuerdos</strong>
   </div>
+
+  <div id="storyMoment" class="story-moment" aria-live="polite">
+    <span id="storyStep">01 · PARA TI</span>
+    <h3 id="storyTitle">Todo empieza con una flor</h3>
+    <p id="storyText">Porque hay detalles que merecen quedarse un poquito más.</p>
+  </div>
+
+  <aside id="memorySpotlight" class="memory-spotlight" aria-hidden="true">
+    <div class="memory-photo"><img id="memoryImage" src="assets/foto2.jpg" alt="Uno de nuestros recuerdos"></div>
+    <div>
+      <span>Un recuerdo nuestro</span>
+      <p id="memoryCaption">Hay momentos pequeños que terminan significándolo todo.</p>
+    </div>
+  </aside>
 
   <div class="progress-dots" aria-hidden="true">
     <i class="on"></i><i></i><i></i><i></i><i></i>
@@ -80,6 +95,17 @@
   <button id="letterBtn" class="letter-btn" type="button" aria-label="Abrir carta">
     <span aria-hidden="true">💌</span><b>Leer mi carta</b>
   </button>
+
+  <section id="finale" class="finale" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="finaleTitle">
+    <div class="finale-card">
+      <div class="finale-flower" aria-hidden="true">🌻</div>
+      <span class="finale-kicker">Y después de todo este pequeño universo...</span>
+      <h2 id="finaleTitle">Siempre tú, Allyson <em>💛</em></h2>
+      <p>Te elegiría en esta vida y en cada universo donde volvamos a encontrarnos.</p>
+      <button id="finaleOpen" type="button"><span>Hay algo más que quiero decirte</span><i>💌</i></button>
+      <button id="finaleExplore" class="finale-secondary" type="button">Seguir explorando el universo</button>
+    </div>
+  </section>
 
   <section id="letter" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="letterTitle">
     <article>
@@ -118,6 +144,6 @@
     };
   </script>
   <script src="vendor/three.min.js?v=159"></script>
-  <script src="script.js?v=10"></script>
+  <script src="script.js?v=12"></script>
 </body>
 </html>
