@@ -471,3 +471,12 @@ body::after{
   .story-moment h3{font-size:12px}
   .hero-copy strong{font-size:20px}
 }
+
+
+/* v6: el protagonismo queda en la escena 3D */
+.story-moment{display:none!important}
+@media(max-width:650px){
+  .hero-copy{top:8.7%}
+  .hero-copy strong{font-size:21px;max-width:285px}
+  .hero-copy span{background:rgba(8,6,1,.18);backdrop-filter:blur(3px)}
+}
