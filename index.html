@@ -1,7 +1,57 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Flores amarillas para Allyson 🌻</title><link rel="stylesheet" href="styles.css"></head>
-<body><canvas id="galaxy"></canvas><div id="start" class="overlay"><div class="intro"><div class="sunflower">🌻</div><h1>Para Allyson</h1><p>Preparé un pequeño universo de flores amarillas para ti.</p><button id="startBtn">Toca para descubrirlo 💛</button><small>Con cariño, P0L1NG3R</small></div></div>
-<header><div><b>Allyson 💛</b><span>Flores amarillas</span></div><button id="music">♫</button></header>
-<main id="scene"><div class="halo"></div><div class="heart">💛</div><div class="title"><h2>Flores amarillas para Allyson</h2><p>Porque desde que llegaste, mi mundo florece distinto.</p></div><div id="orbit"></div></main>
-<div class="hint">↔ Arrastra · pellizca para acercar</div><button id="letterBtn">💌</button>
-<section id="letter" class="modal"><article><button id="close">×</button><div class="flower">🌻</div><h2>Para ti, Allyson</h2><p>No quería regalarte solamente flores amarillas. Quería dejarte un lugar al que puedas volver cuando quieras recordar lo especial que eres para mí.</p><p>Contigo aprendí que los mejores recuerdos no siempre se planean: aparecen entre una sonrisa, una salida, una foto inesperada y esos momentos simples que terminan significándolo todo.</p><p>Si hoy las flores amarillas hablan de cariño, alegría y de querer bonito, entonces todas llevan tu nombre. Gracias por coincidir conmigo y por hacer que mi mundo tenga un poquito más de luz.</p><p>Te elegiría en esta vida y en cada universo donde volvamos a encontrarnos. 🌻💛</p><strong>Con cariño,<br>P0L1NG3R</strong></article></section>
-<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script><script src="script.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#050400" />
+  <title>Flores amarillas para Allyson 🌻</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="galaxy" aria-label="Universo 3D de flores amarillas"></canvas>
+
+  <div id="start" class="overlay">
+    <div class="intro-card">
+      <div class="intro-flower" aria-hidden="true">🌻</div>
+      <p class="eyebrow">21 de septiembre</p>
+      <h1>Feliz Día de las<br><span>Flores Amarillas</span></h1>
+      <p class="intro-copy">Allyson, hice este pequeño universo para ti.</p>
+      <button id="startBtn" type="button">Toca para entrar 💛</button>
+      <small>De P0L1NG3R para Allyson</small>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div>
+      <p class="top-kicker">Para mi persona favorita</p>
+      <h2>Allyson <span>🌻</span></h2>
+    </div>
+    <button id="music" class="round-btn" type="button" aria-label="Música">♫</button>
+  </header>
+
+  <div class="hero-copy" aria-hidden="true">
+    <p>Feliz Día de las Flores Amarillas 🌻</p>
+    <strong>Mi mundo florece contigo</strong>
+  </div>
+
+  <div class="hint">Arrastra para girar · rueda/pellizca para acercar</div>
+  <button id="letterBtn" class="letter-btn" type="button" aria-label="Abrir carta">💌</button>
+
+  <section id="letter" class="modal" aria-hidden="true">
+    <article>
+      <button id="close" type="button" aria-label="Cerrar">×</button>
+      <div class="letter-flower">🌻</div>
+      <p class="letter-kicker">Para ti 💛</p>
+      <h2>Allyson</h2>
+      <p>Hay personas que llegan y, sin darse cuenta, hacen que muchos de tus días sean mejores. Así eres tú para mí.</p>
+      <p>Gracias por cada momento compartido, por las risas, por estar ahí incluso en lo simple y por convertir recuerdos pequeños en algo que siempre quiero guardar.</p>
+      <p>Quiero que estas flores amarillas te recuerden que, hoy y siempre, eres alguien muy especial para mí. Que tu sonrisa siga iluminando mis días y que nunca nos falten historias nuevas por vivir.</p>
+      <p>Te elegiría en esta vida y en cada universo donde volvamos a encontrarnos. 🌻💛</p>
+      <strong>Con cariño,<br>P0L1NG3R</strong>
+    </article>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
