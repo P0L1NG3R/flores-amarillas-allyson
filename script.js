@@ -435,7 +435,9 @@
       color: 0x5b3306,
       emissive: 0x241202,
       emissiveIntensity: 0.34,
-      shininess: 58
+      shininess: 58,
+      transparent: true,
+      opacity: 1
     })
   );
   bloomCenter.scale.z = 0.58;
@@ -444,7 +446,7 @@
 
   const seedCount = MOBILE ? 34 : 52;
   const seedGeo = new THREE.SphereGeometry(MOBILE ? 0.018 : 0.021, 5, 4);
-  const seedMaterial = new THREE.MeshBasicMaterial({color:0xd89b20});
+  const seedMaterial = new THREE.MeshBasicMaterial({color:0xd89b20,transparent:true,opacity:1});
   for (let i = 0; i < seedCount; i++) {
     const a = i * 2.399963229728653;
     const r = Math.sqrt(i / seedCount) * (MOBILE ? 0.27 : 0.31);
@@ -943,11 +945,13 @@
     // La flor abre y respira; durante el morph sus petalos parecen soltarse hacia las particulas.
     const bloomBreath=REDUCED_MOTION?1:1+Math.sin(t*1.25)*0.018;
     centralBloom.visible=flowerVisibility>0.012;
-    centralBloom.scale.setScalar(bloomBreath*(0.88+flowerVisibility*0.12));
+    centralBloom.scale.setScalar(bloomBreath*(0.58+flowerVisibility*0.42));
     centralBloom.position.y=0.18+(REDUCED_MOTION?0:Math.sin(t*.86)*0.025);
     bloomGlow.material.opacity=(0.05+flowerVisibility*0.13)+(REDUCED_MOTION?0:Math.sin(t*1.1)*0.012);
     bloomLight.intensity=(MOBILE?0.72:0.94)+flowerVisibility*(MOBILE?0.38:0.52);
-    bloomCenter.material.emissiveIntensity=0.28+flowerVisibility*0.16;
+    bloomCenter.material.emissiveIntensity=0.20+flowerVisibility*0.24;
+    bloomCenter.material.opacity=0.08+flowerVisibility*0.92;
+    seedMaterial.opacity=0.05+flowerVisibility*0.95;
 
     bloomPetals.forEach((o,i)=>{
       const open=0.91+flowerVisibility*0.09;
