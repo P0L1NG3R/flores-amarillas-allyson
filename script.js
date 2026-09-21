@@ -513,60 +513,101 @@
   }
   scene.add(shootingStarGroup);
 
-  // Vía Láctea inferior: espiral amplia de estrellas doradas y azuladas bajo la escena.
-  const milkyWayGroup=new THREE.Group();
-  const milkyWayCount=MOBILE?(LOW_MEMORY?520:860):2300;
-  const milkyPos=new Float32Array(milkyWayCount*3);
-  const milkyCol=new Float32Array(milkyWayCount*3);
-  const milkyPalette=[0xfff2b0,0xffd557,0xbfeaff,0xffffff,0xffbd32];
-  const milkyColor=new THREE.Color();
+  // VÍA LÁCTEA CINEMATOGRÁFICA: remolino espacial protagonista bajo toda la escena.
+  const milkyWayGroup = new THREE.Group();
+  const milkyWayCount = MOBILE ? (LOW_MEMORY ? 900 : 1450) : 3900;
+  const milkyPos = new Float32Array(milkyWayCount * 3);
+  const milkyCol = new Float32Array(milkyWayCount * 3);
+  const milkyPalette = [0xfff5c4,0xffd75a,0xc9ecff,0xffffff,0xffb72d,0xaedfff];
+  const milkyColor = new THREE.Color();
+
   for(let i=0;i<milkyWayCount;i++){
-    const arm=i%4;
-    const r=.18+Math.pow(Math.random(),.72)*(MOBILE?4.65:6.05);
-    const spread=(Math.random()-.5)*(.30+r*.075);
-    const a=arm*Math.PI/2+r*1.36+spread;
-    const coreBias=1-Math.min(1,r/(MOBILE?4.65:6.05));
-    milkyPos[i*3]=Math.cos(a)*r+(Math.random()-.5)*.10;
-    milkyPos[i*3+1]=Math.sin(a)*r*(MOBILE?.35:.31)+(Math.random()-.5)*(.08+r*.014);
-    milkyPos[i*3+2]=(Math.random()-.5)*(.18+r*.045)-coreBias*.12;
-    milkyColor.setHex(milkyPalette[(i+arm)%milkyPalette.length]);
-    const lum=.66+coreBias*.34;
-    milkyCol[i*3]=milkyColor.r*lum;
-    milkyCol[i*3+1]=milkyColor.g*lum;
-    milkyCol[i*3+2]=milkyColor.b*lum;
+    const arm = i % 5;
+    const maxR = MOBILE ? 5.8 : 7.8;
+    const r = 0.10 + Math.pow(Math.random(),0.68) * maxR;
+    const armBase = arm * (Math.PI * 2 / 5);
+    const spiral = r * 1.53;
+    const armWidth = 0.12 + r * 0.055;
+    const jitter = (Math.random() - .5) * armWidth;
+    const a = armBase + spiral + jitter;
+
+    const centerBias = 1 - Math.min(1,r/maxR);
+    const discNoise = (Math.random()-.5) * (0.08 + r * 0.026);
+
+    milkyPos[i*3] = Math.cos(a) * r + (Math.random()-.5) * .055;
+    milkyPos[i*3+1] = Math.sin(a) * r * (MOBILE?.36:.32) + discNoise;
+    milkyPos[i*3+2] = (Math.random()-.5) * (0.14 + r*.045) - centerBias*.20;
+
+    milkyColor.setHex(milkyPalette[(i + arm) % milkyPalette.length]);
+    const luminosity = .72 + centerBias*.42;
+    milkyCol[i*3] = milkyColor.r * luminosity;
+    milkyCol[i*3+1] = milkyColor.g * luminosity;
+    milkyCol[i*3+2] = milkyColor.b * luminosity;
   }
-  const milkyGeo=new THREE.BufferGeometry();
+
+  const milkyGeo = new THREE.BufferGeometry();
   milkyGeo.setAttribute("position",new THREE.BufferAttribute(milkyPos,3));
   milkyGeo.setAttribute("color",new THREE.BufferAttribute(milkyCol,3));
-  const milkyMat=new THREE.PointsMaterial({
-    map:glowTexture(),
-    vertexColors:true,
-    size:MOBILE?.060:.052,
-    transparent:true,
-    opacity:MOBILE?.62:.70,
-    depthWrite:false,
-    blending:THREE.AdditiveBlending,
-    alphaTest:.012
+
+  const milkyMat = new THREE.PointsMaterial({
+    map: glowTexture(),
+    vertexColors: true,
+    size: MOBILE ? .078 : .061,
+    transparent: true,
+    opacity: MOBILE ? .86 : .94,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    alphaTest: .008
   });
-  const milkyWayPoints=new THREE.Points(milkyGeo,milkyMat);
-  milkyWayPoints.renderOrder=1;
+
+  const milkyWayPoints = new THREE.Points(milkyGeo,milkyMat);
+  milkyWayPoints.renderOrder = 2;
   milkyWayGroup.add(milkyWayPoints);
 
-  const milkyGlow=new THREE.Sprite(new THREE.SpriteMaterial({
-    map:glowTexture(),
-    color:0xffca42,
-    transparent:true,
-    opacity:MOBILE?.075:.095,
-    depthWrite:false,
-    blending:THREE.AdditiveBlending
+  // Núcleo brillante para que se lea claramente como galaxia y no como nube de puntos.
+  const milkyCore = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(),
+    color: 0xffd65b,
+    transparent: true,
+    opacity: MOBILE ? .31 : .40,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
   }));
-  milkyGlow.scale.set(MOBILE?6.8:8.9,MOBILE?1.45:1.75,1);
-  milkyGlow.position.z=-.45;
+  milkyCore.scale.set(MOBILE?2.65:3.35,MOBILE?1.45:1.72,1);
+  milkyCore.position.set(0,0,-.34);
+  milkyCore.renderOrder = 1;
+  milkyWayGroup.add(milkyCore);
+
+  // Halo horizontal ancho: da la banda luminosa típica de una Vía Láctea vista en perspectiva.
+  const milkyGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(),
+    color: 0xffbd32,
+    transparent: true,
+    opacity: MOBILE ? .16 : .21,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  }));
+  milkyGlow.scale.set(MOBILE?10.6:14.3,MOBILE?2.45:3.05,1);
+  milkyGlow.position.set(0,-.02,-.64);
+  milkyGlow.renderOrder = 0;
   milkyWayGroup.add(milkyGlow);
 
-  milkyWayGroup.position.set(0,MOBILE?-2.72:-2.92,-1.55);
-  milkyWayGroup.rotation.x=MOBILE?-.42:-.50;
-  milkyWayGroup.rotation.z=-.14;
+  // Segundo halo frío para mezclar dorado + azul espacial.
+  const milkyBlueGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(),
+    color: 0x77cfff,
+    transparent: true,
+    opacity: MOBILE ? .055 : .075,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  }));
+  milkyBlueGlow.scale.set(MOBILE?8.1:11.4,MOBILE?1.65:2.05,1);
+  milkyBlueGlow.position.set(.38,.18,-.52);
+  milkyWayGroup.add(milkyBlueGlow);
+
+  milkyWayGroup.position.set(0,MOBILE?-2.72:-2.92,-1.62);
+  milkyWayGroup.rotation.x = MOBILE ? -.53 : -.60;
+  milkyWayGroup.rotation.z = -.19;
   scene.add(milkyWayGroup);
 
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -892,77 +933,130 @@
   holoDust.renderOrder = 30;
   hologramGroup.visible = false;
 
-  // Ramo holográfico especial del cuarto estado visual (índice 3).
-  // Se renderiza como una constelación floral con tallos, envoltura y aura propia.
-  const bouquetHoloGroup=new THREE.Group();
-  bouquetHoloGroup.visible=false;
-  bouquetHoloGroup.position.set(0,-.02,.38);
+  // RAMO HOLOGRÁFICO PRINCIPAL DEL ESTADO 3.
+  // Flores construidas con geometría real, tallos, envoltura, lazo, órbitas y polvo luminoso.
+  const bouquetHoloGroup = new THREE.Group();
+  bouquetHoloGroup.visible = false;
+  bouquetHoloGroup.position.set(0,-.10,.48);
   universe.add(bouquetHoloGroup);
 
-  const bouquetHeadLayout=[
-    [-1.08,.72],[-.62,1.18],[-.08,1.42],[.53,1.19],[1.05,.72],[-.38,.57],[.34,.60]
+  const bouquetFlowers = [];
+  const bouquetLayout = [
+    [-1.06,.74,.90,-.10],
+    [-.58,1.18,.94,.03],
+    [0,1.43,1.08,.11],
+    [.61,1.18,.94,.03],
+    [1.07,.73,.90,-.10],
+    [-.34,.55,.86,.05],
+    [.35,.57,.86,.08]
   ];
-  const bouquetPointCountPerHead=MOBILE?(LOW_MEMORY?24:34):52;
-  const bouquetPointTotal=bouquetHeadLayout.length*bouquetPointCountPerHead;
-  const bouquetPos=new Float32Array(bouquetPointTotal*3);
-  const bouquetCol=new Float32Array(bouquetPointTotal*3);
-  const bouquetColor=new THREE.Color();
-  let bouquetCursor=0;
-  bouquetHeadLayout.forEach((h,hi)=>{
-    for(let j=0;j<bouquetPointCountPerHead;j++){
-      const a=Math.random()*Math.PI*2;
-      const petal=.12+.18*Math.pow(Math.abs(Math.cos(8*a)),.48);
-      const center=j<Math.max(5,Math.floor(bouquetPointCountPerHead*.18));
-      const r=center?Math.sqrt(Math.random())*.115:(.10+Math.random()*petal);
-      const idx=bouquetCursor++;
-      bouquetPos[idx*3]=h[0]+Math.cos(a)*r;
-      bouquetPos[idx*3+1]=h[1]+Math.sin(a)*r;
-      bouquetPos[idx*3+2]=(Math.random()-.5)*.22+(hi%2?.04:-.02);
-      bouquetColor.setHex(center?0x8c5206:(j%4===0?0xfff3a8:j%3===0?0xffbd24:0xffdc4f));
-      bouquetCol[idx*3]=bouquetColor.r;
-      bouquetCol[idx*3+1]=bouquetColor.g;
-      bouquetCol[idx*3+2]=bouquetColor.b;
-    }
-  });
-  const bouquetGeo=new THREE.BufferGeometry();
-  bouquetGeo.setAttribute("position",new THREE.BufferAttribute(bouquetPos,3));
-  bouquetGeo.setAttribute("color",new THREE.BufferAttribute(bouquetCol,3));
-  const bouquetPointMat=new THREE.PointsMaterial({
-    map:glowTexture(),
-    vertexColors:true,
-    size:MOBILE?.095:.082,
-    transparent:true,
-    opacity:0,
-    depthWrite:false,
-    blending:THREE.AdditiveBlending,
-    alphaTest:.012
-  });
-  const bouquetHoloPoints=new THREE.Points(bouquetGeo,bouquetPointMat);
-  bouquetHoloPoints.renderOrder=35;
-  bouquetHoloGroup.add(bouquetHoloPoints);
 
-  const bouquetStemVertices=[];
-  bouquetHeadLayout.forEach((h,i)=>{
-    bouquetStemVertices.push(
-      (i-3)*.045,-1.46,-.12,
-      h[0]*.72,h[1]-.13,-.03
+  function createBouquetFlower(scale,seed){
+    const g = new THREE.Group();
+    const petals = [];
+
+    const outerCount = MOBILE ? 10 : 12;
+    const innerCount = MOBILE ? 7 : 9;
+
+    function addRing(count,radius,sx,sy,z,colorA,colorB,offset,tilt){
+      for(let i=0;i<count;i++){
+        const a=i/count*Math.PI*2+offset;
+        const mat=new THREE.MeshBasicMaterial({
+          color:i%2?colorA:colorB,
+          transparent:true,
+          opacity:0,
+          side:THREE.DoubleSide,
+          depthWrite:false,
+          blending:THREE.AdditiveBlending
+        });
+        const p=new THREE.Mesh(petalGeo,mat);
+        p.scale.set(sx*scale,sy*scale,.88);
+        p.position.set(Math.cos(a)*radius*scale,Math.sin(a)*radius*scale,z);
+        p.rotation.z=a-Math.PI/2;
+        p.rotation.x=tilt+Math.sin(a)*.10;
+        p.rotation.y=Math.cos(a)*.055;
+        g.add(p);
+        petals.push({mesh:p,mat,angle:a,radius:radius*scale,phase:seed+i*.37,tilt});
+      }
+    }
+
+    addRing(outerCount,.29,.20,.34,-.018,0xffc322,0xffef8b,0,.34);
+    addRing(innerCount,.18,.16,.27,.035,0xffb515,0xffdc4b,Math.PI/innerCount,.25);
+
+    const coreMat=new THREE.MeshBasicMaterial({
+      color:0x7b4306,
+      transparent:true,
+      opacity:0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const core=new THREE.Mesh(
+      new THREE.SphereGeometry(.105*scale,MOBILE?8:12,MOBILE?6:9),
+      coreMat
     );
+    core.scale.z=.62;
+    core.position.z=.09;
+    g.add(core);
+
+    const haloMat=new THREE.SpriteMaterial({
+      map:glowTexture(),
+      color:0xffc529,
+      transparent:true,
+      opacity:0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const halo=new THREE.Sprite(haloMat);
+    halo.scale.set(.98*scale,.98*scale,1);
+    halo.position.z=-.12;
+    g.add(halo);
+
+    const starMat=new THREE.SpriteMaterial({
+      map:heroStarTexture,
+      color:0xfff3b5,
+      transparent:true,
+      opacity:0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const star=new THREE.Sprite(starMat);
+    star.scale.set(.12*scale,.12*scale,1);
+    star.position.set(.30*scale,.22*scale,.18);
+    g.add(star);
+
+    return {g,petals,core,coreMat,halo,haloMat,star,starMat,seed,scale};
+  }
+
+  bouquetLayout.forEach((f,i)=>{
+    const flower=createBouquetFlower(f[2],i*.79);
+    flower.g.position.set(f[0],f[1],f[3]);
+    bouquetHoloGroup.add(flower.g);
+    bouquetFlowers.push(flower);
   });
-  const bouquetStemGeo=new THREE.BufferGeometry();
-  bouquetStemGeo.setAttribute("position",new THREE.Float32BufferAttribute(bouquetStemVertices,3));
-  const bouquetStemMat=new THREE.LineBasicMaterial({
-    color:0xa7edff,
+
+  const bouquetStemMat = new THREE.LineBasicMaterial({
+    color:0xa9edff,
     transparent:true,
     opacity:0,
     depthWrite:false,
     blending:THREE.AdditiveBlending
   });
+  const bouquetStemPts=[];
+  bouquetLayout.forEach((f,i)=>{
+    bouquetStemPts.push(
+      (i-3)*.050,-1.52,-.11,
+      f[0]*.75,f[1]-.12,f[3]-.05
+    );
+  });
+  const bouquetStemGeo=new THREE.BufferGeometry();
+  bouquetStemGeo.setAttribute("position",new THREE.Float32BufferAttribute(bouquetStemPts,3));
   const bouquetStems=new THREE.LineSegments(bouquetStemGeo,bouquetStemMat);
   bouquetStems.renderOrder=33;
   bouquetHoloGroup.add(bouquetStems);
 
+  // Envoltura wireframe en forma de ramo.
   const bouquetWrapMat=new THREE.MeshBasicMaterial({
-    color:0xffd75a,
+    color:0xffd55c,
     wireframe:true,
     transparent:true,
     opacity:0,
@@ -970,43 +1064,86 @@
     blending:THREE.AdditiveBlending
   });
   const bouquetWrap=new THREE.Mesh(
-    new THREE.ConeGeometry(MOBILE?.72:.80,MOBILE?1.28:1.42,12,2,true),
+    new THREE.ConeGeometry(MOBILE?.86:.98,MOBILE?1.44:1.62,14,2,true),
     bouquetWrapMat
   );
-  bouquetWrap.position.set(0,-.92,-.08);
+  bouquetWrap.position.set(0,-.92,-.09);
+  bouquetWrap.rotation.z=Math.PI;
   bouquetWrap.renderOrder=32;
   bouquetHoloGroup.add(bouquetWrap);
 
+  // Lazo doble.
   const bouquetBowMat=new THREE.MeshBasicMaterial({
-    color:0xffefae,
+    color:0xfff0b4,
     transparent:true,
     opacity:0,
     depthWrite:false,
     blending:THREE.AdditiveBlending
   });
-  const bouquetBowL=new THREE.Mesh(new THREE.TorusGeometry(.25,.025,5,26,Math.PI*1.7),bouquetBowMat);
-  const bouquetBowR=new THREE.Mesh(new THREE.TorusGeometry(.25,.025,5,26,Math.PI*1.7),bouquetBowMat.clone());
-  bouquetBowL.scale.set(1.15,.62,1);
-  bouquetBowR.scale.set(1.15,.62,1);
-  bouquetBowL.position.set(-.20,-.43,.09);
-  bouquetBowR.position.set(.20,-.43,.09);
+  const bouquetBowL=new THREE.Mesh(new THREE.TorusGeometry(.24,.026,5,30,Math.PI*1.62),bouquetBowMat);
+  const bouquetBowR=new THREE.Mesh(new THREE.TorusGeometry(.24,.026,5,30,Math.PI*1.62),bouquetBowMat.clone());
+  bouquetBowL.scale.set(1.18,.70,1);
+  bouquetBowR.scale.set(1.18,.70,1);
+  bouquetBowL.position.set(-.22,-.43,.10);
+  bouquetBowR.position.set(.22,-.43,.10);
   bouquetBowL.rotation.z=.34;
   bouquetBowR.rotation.z=Math.PI-.34;
-  bouquetBowL.renderOrder=bouquetBowR.renderOrder=36;
   bouquetHoloGroup.add(bouquetBowL,bouquetBowR);
 
+  // Aura trasera.
   const bouquetAura=new THREE.Sprite(new THREE.SpriteMaterial({
     map:glowTexture(),
-    color:0xffc72f,
+    color:0xffc323,
     transparent:true,
     opacity:0,
     depthWrite:false,
     blending:THREE.AdditiveBlending
   }));
-  bouquetAura.position.set(0,.15,-.52);
-  bouquetAura.scale.set(MOBILE?4.5:5.2,MOBILE?4.5:5.2,1);
-  bouquetAura.renderOrder=27;
+  bouquetAura.position.set(0,.08,-.62);
+  bouquetAura.scale.set(MOBILE?5.0:6.0,MOBILE?5.0:6.0,1);
   bouquetHoloGroup.add(bouquetAura);
+
+  // Dos órbitas cruzadas le dan estética holográfica/cósmica.
+  const bouquetOrbitA=new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE?1.70:2.02,.011,4,MOBILE?54:80),
+    new THREE.MeshBasicMaterial({
+      color:0x91e2ff,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending
+    })
+  );
+  const bouquetOrbitB=new THREE.Mesh(
+    new THREE.TorusGeometry(MOBILE?1.37:1.62,.009,4,MOBILE?54:80),
+    new THREE.MeshBasicMaterial({
+      color:0xffe690,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending
+    })
+  );
+  bouquetOrbitA.rotation.set(Math.PI/2.15,.28,.10);
+  bouquetOrbitB.rotation.set(-Math.PI/2.55,-.18,-.12);
+  bouquetHoloGroup.add(bouquetOrbitA,bouquetOrbitB);
+
+  // Polvo estelar local del ramo.
+  const bouquetDustCount=MOBILE?(LOW_MEMORY?80:125):260;
+  const bouquetDustPos=new Float32Array(bouquetDustCount*3);
+  for(let i=0;i<bouquetDustCount;i++){
+    const a=Math.random()*Math.PI*2;
+    const r=.35+Math.pow(Math.random(),.72)*(MOBILE?1.85:2.25);
+    bouquetDustPos[i*3]=Math.cos(a)*r;
+    bouquetDustPos[i*3+1]=-.25+Math.sin(a)*r*.72+(Math.random()-.5)*.75;
+    bouquetDustPos[i*3+2]=(Math.random()-.5)*.65;
+  }
+  const bouquetDustGeo=new THREE.BufferGeometry();
+  bouquetDustGeo.setAttribute("position",new THREE.BufferAttribute(bouquetDustPos,3));
+  const bouquetDustMat=new THREE.PointsMaterial({
+    map:glowTexture(),
+    color:0xc5eeff,
+    size:MOBILE?.052:.044,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    alphaTest:.012
+  });
+  const bouquetDust=new THREE.Points(bouquetDustGeo,bouquetDustMat);
+  bouquetHoloGroup.add(bouquetDust);
 
   /* Corrientes de luz: profundidad 3D sin anillos ni efecto planeta. */
   const flowGroup = new THREE.Group();
@@ -1864,27 +2001,66 @@
       o.s.material.opacity=holoAlpha*(.30+Math.max(0,Math.sin(t*.92+o.phase))*.36);
     });
 
-    const bouquetAlpha=THREE.MathUtils.clamp(bouquetVisibility*(.82+(REDUCED_MOTION?0:(Math.sin(t*1.65)+1)*.09)),0,1);
+    const bouquetAlpha=THREE.MathUtils.clamp(
+      bouquetVisibility*(.92+(REDUCED_MOTION?0:(Math.sin(t*1.7)+1)*.035)),
+      0,1
+    );
     bouquetHoloGroup.visible=bouquetAlpha>.012;
+
     if(bouquetHoloGroup.visible){
-      const bouquetPulse=1+(REDUCED_MOTION?0:Math.sin(t*1.18)*.025);
-      bouquetHoloGroup.position.y=-.02+(REDUCED_MOTION?0:Math.sin(t*.76)*.038);
-      bouquetHoloGroup.rotation.z=REDUCED_MOTION?0:Math.sin(t*.39)*.028;
-      bouquetHoloGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.31)*.075;
-      bouquetHoloGroup.scale.setScalar((MOBILE?.96:1.04)*bouquetPulse);
-      bouquetPointMat.opacity=bouquetAlpha*(MOBILE?.82:.91);
-      bouquetPointMat.size=(MOBILE?.095:.082)*(1+(REDUCED_MOTION?0:Math.max(0,Math.sin(t*2.05))*.20));
-      bouquetStemMat.opacity=bouquetAlpha*(MOBILE?.46:.58);
-      bouquetWrapMat.opacity=bouquetAlpha*(MOBILE?.26:.34);
-      bouquetBowL.material.opacity=bouquetAlpha*(MOBILE?.52:.68);
-      bouquetBowR.material.opacity=bouquetAlpha*(MOBILE?.52:.68);
-      bouquetAura.material.opacity=bouquetAlpha*(MOBILE?.16:.21);
-      const auraScale=(MOBILE?4.5:5.2)*(1+(REDUCED_MOTION?0:Math.sin(t*.88)*.055));
-      bouquetAura.scale.set(auraScale,auraScale,1);
-      bouquetHoloPoints.rotation.z=REDUCED_MOTION?0:t*.016;
+      const bouquetPulse=1+(REDUCED_MOTION?0:Math.sin(t*1.08)*.024);
+      bouquetHoloGroup.position.y=-.10+(REDUCED_MOTION?0:Math.sin(t*.82)*.050);
+      bouquetHoloGroup.rotation.z=REDUCED_MOTION?0:Math.sin(t*.35)*.030;
+      bouquetHoloGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.29)*.090;
+      bouquetHoloGroup.scale.setScalar((MOBILE?1.00:1.08)*bouquetPulse);
+
+      bouquetFlowers.forEach((flower,fi)=>{
+        const breathe=REDUCED_MOTION?0:Math.sin(t*(1.05+(fi%3)*.08)+flower.seed);
+        flower.g.position.z=bouquetLayout[fi][3]+breathe*.032;
+        flower.g.rotation.z=breathe*.018;
+
+        flower.petals.forEach((p,pi)=>{
+          const wave=REDUCED_MOTION?0:Math.sin(t*(1.24+(pi%4)*.04)+p.phase);
+          const radius=p.radius*(1+wave*.045);
+          p.mesh.position.x=Math.cos(p.angle)*radius;
+          p.mesh.position.y=Math.sin(p.angle)*radius;
+          p.mesh.position.z=(pi%2?.02:-.015)+wave*.022;
+          p.mesh.rotation.z=p.angle-Math.PI/2+wave*.035;
+          p.mesh.rotation.x=p.tilt+Math.sin(p.angle)*.10+wave*.045;
+          p.mesh.rotation.y=Math.cos(p.angle)*.055+wave*.025;
+          p.mat.opacity=bouquetAlpha*(.74+Math.max(0,wave)*.18);
+        });
+
+        flower.coreMat.opacity=bouquetAlpha*.92;
+        flower.haloMat.opacity=bouquetAlpha*(MOBILE?.26:.34);
+        const haloScale=.98*flower.scale*(1+(REDUCED_MOTION?0:Math.sin(t*1.18+flower.seed)*.085));
+        flower.halo.scale.set(haloScale,haloScale,1);
+
+        const flash=REDUCED_MOTION?.45:Math.pow(Math.max(0,Math.sin(t*(1.75+fi*.07)+flower.seed)),1.7);
+        flower.starMat.opacity=bouquetAlpha*(.18+flash*.76);
+        const starScale=.12*flower.scale*(.75+flash*.80);
+        flower.star.scale.set(starScale,starScale,1);
+      });
+
+      bouquetStemMat.opacity=bouquetAlpha*(MOBILE?.50:.62);
+      bouquetWrapMat.opacity=bouquetAlpha*(MOBILE?.30:.40);
+      bouquetBowL.material.opacity=bouquetAlpha*(MOBILE?.62:.78);
+      bouquetBowR.material.opacity=bouquetAlpha*(MOBILE?.62:.78);
+      bouquetAura.material.opacity=bouquetAlpha*(MOBILE?.22:.30);
+      bouquetOrbitA.material.opacity=bouquetAlpha*(MOBILE?.22:.30);
+      bouquetOrbitB.material.opacity=bouquetAlpha*(MOBILE?.17:.24);
+      bouquetDustMat.opacity=bouquetAlpha*(MOBILE?.46:.58);
+
+      bouquetOrbitA.rotation.z=REDUCED_MOTION?0:t*.31;
+      bouquetOrbitB.rotation.z=REDUCED_MOTION?0:-t*.25;
+      bouquetDust.rotation.z=REDUCED_MOTION?0:t*.045;
+      bouquetDust.rotation.y=REDUCED_MOTION?0:Math.sin(t*.25)*.12;
+
+      const auraPulse=1+(REDUCED_MOTION?0:Math.sin(t*.76)*.060);
+      bouquetAura.scale.setScalar((MOBILE?5.0:6.0)*auraPulse);
     }
 
-    bloomLight.intensity += (transitionEnergy*.52 + entryEnergy*.31 + finaleEnergy*.20 + holoAlpha*.10);
+    bloomLight.intensity += (transitionEnergy*.52 + entryEnergy*.31 + finaleEnergy*.20 + holoAlpha*.10 + bouquetVisibility*.34);
 
     const stormEnergy = REDUCED_MOTION
       ? 0
@@ -1935,7 +2111,7 @@
       const flash=Math.pow(Math.max(0,twinkle),2.2);
       const pulse=1+flash*.72;
       o.star.scale.setScalar(o.baseScale*pulse);
-      o.star.material.opacity=.30+flash*.68+transitionEnergy*.12+finaleEnergy*.08;
+      o.star.material.opacity=.30+flash*.68+transitionEnergy*.12+finaleEnergy*.08+bouquetVisibility*.10;
       if(!REDUCED_MOTION){
         o.star.position.y+=Math.sin(t*o.drift+o.phase)*.0009;
       }
@@ -1949,7 +2125,7 @@
       if(u>=0 && u<=1){
         const q=u*u*(3-2*u);
         const flare=Math.sin(Math.PI*u);
-        o.s.material.opacity=Math.pow(flare,.72)*(MOBILE?.82:.98);
+        o.s.material.opacity=Math.min(1,Math.pow(flare,.72)*(MOBILE?.84:1.0)+bouquetVisibility*.08);
         o.s.position.set(
           (MOBILE?-6.1:-8.4)+q*(MOBILE?12.6:17.0),
           o.y-q*(MOBILE?5.8:7.7)+Math.sin(u*Math.PI)*.32,
@@ -1964,13 +2140,19 @@
     });
 
     if(!REDUCED_MOTION){
-      milkyWayGroup.rotation.z=-.14+t*.038;
-      milkyWayGroup.rotation.y=Math.sin(t*.13)*.075;
-      milkyWayGroup.position.x=Math.sin(t*.10)*.09;
+      milkyWayGroup.rotation.z=-.19+t*.050;
+      milkyWayGroup.rotation.y=Math.sin(t*.15)*.095;
+      milkyWayGroup.position.x=Math.sin(t*.11)*.14;
+      milkyWayGroup.position.y=(MOBILE?-2.72:-2.92)+Math.sin(t*.17)*.055;
     }
-    milkyWayPoints.material.opacity=(MOBILE?.58:.66)+(REDUCED_MOTION?0:Math.sin(t*.46)*.055)+transitionEnergy*.12+finaleEnergy*.08;
-    milkyGlow.material.opacity=(MOBILE?.060:.080)+(REDUCED_MOTION?0:(Math.sin(t*.58)+1)*.020)+transitionEnergy*.045;
-    const milkyPulse=1+(REDUCED_MOTION?0:Math.sin(t*.33)*.022);
+
+    const galaxyShow=transitionEnergy*.10+finaleEnergy*.08+bouquetVisibility*.16;
+    milkyWayPoints.material.opacity=(MOBILE?.80:.89)+(REDUCED_MOTION?0:Math.sin(t*.47)*.055)+galaxyShow;
+    milkyCore.material.opacity=(MOBILE?.28:.36)+(REDUCED_MOTION?0:(Math.sin(t*.78)+1)*.025)+bouquetVisibility*.06;
+    milkyGlow.material.opacity=(MOBILE?.13:.18)+(REDUCED_MOTION?0:(Math.sin(t*.56)+1)*.018)+bouquetVisibility*.045;
+    milkyBlueGlow.material.opacity=(MOBILE?.045:.065)+(REDUCED_MOTION?0:(Math.cos(t*.43)+1)*.010)+transitionEnergy*.015;
+
+    const milkyPulse=1+(REDUCED_MOTION?0:Math.sin(t*.35)*.028)+bouquetVisibility*.035;
     milkyWayGroup.scale.setScalar(milkyPulse);
 
     glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
@@ -2025,11 +2207,12 @@
       const focusMask=THREE.MathUtils.clamp(1-focusDist/safeRadius,0,1);
       const frontness=THREE.MathUtils.clamp((o.g.position.z+.20)/1.05,0,1);
       const hideFactor=focusMask*(.38+.62*frontness);
-      o.g.position.z-=hideFactor*(MOBILE?.68:.96);
+      const bouquetPush=bouquetVisibility*.28;
+      o.g.position.z-=hideFactor*(MOBILE?.68:.96)+bouquetPush;
 
       const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.62+o.phase)*.045))*(secretPulse>0?1+secretPulse*.17:1);
       const protectedScale=1-hideFactor*.27;
-      o.g.scale.setScalar(o.baseScale*pulse*protectedScale);
+      o.g.scale.setScalar(o.baseScale*pulse*protectedScale*(1-bouquetVisibility*.16));
       o.g.userData.fadeMaterials?.forEach((entry,mi)=>{
         const shimmer=REDUCED_MOTION?1:1+Math.sin(t*(.92+mi*.07)+o.phase+mi)*(.045+mi*.010);
         entry.material.opacity=entry.base*(1-hideFactor*.72)*shimmer;
