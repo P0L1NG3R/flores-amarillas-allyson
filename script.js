@@ -377,6 +377,89 @@
     return new THREE.CanvasTexture(c);
   }
 
+  // Estrellas protagonistas: más grandes, con profundidad y destello lento.
+  const heroStarCount = MOBILE ? (LOW_MEMORY ? 5 : 8) : 14;
+  const heroStars = [];
+  for (let i = 0; i < heroStarCount; i++) {
+    const cool = i % 3 === 0;
+    const mat = new THREE.SpriteMaterial({
+      map: glowTexture(),
+      color: cool ? 0xbdeaff : 0xffed9a,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const star = new THREE.Sprite(mat);
+    const a = i / heroStarCount * Math.PI * 2 + i * .73;
+    const r = (MOBILE ? 6.2 : 7.5) + (i % 4) * (MOBILE ? 1.35 : 1.85);
+    const baseScale = (MOBILE ? .19 : .22) + (i % 5) * .038;
+    star.position.set(
+      Math.cos(a) * r,
+      -3.4 + ((i * 17) % 70) / 10,
+      Math.sin(a) * r * .58 - 3.8
+    );
+    star.scale.set(baseScale, baseScale, 1);
+    star.renderOrder = 2;
+    scene.add(star);
+    heroStars.push({star,baseScale,phase:i*1.37});
+  }
+
+  function shootingStarTexture(){
+    const c=document.createElement("canvas");
+    c.width=512;c.height=64;
+    const x=c.getContext("2d");
+    const g=x.createLinearGradient(0,0,512,0);
+    g.addColorStop(0,"rgba(255,255,255,0)");
+    g.addColorStop(.48,"rgba(160,220,255,.08)");
+    g.addColorStop(.82,"rgba(255,232,154,.42)");
+    g.addColorStop(.965,"rgba(255,250,220,.98)");
+    g.addColorStop(1,"rgba(255,255,255,0)");
+    x.fillStyle=g;
+    x.fillRect(0,25,512,14);
+    const radial=x.createRadialGradient(486,32,0,486,32,28);
+    radial.addColorStop(0,"rgba(255,255,255,1)");
+    radial.addColorStop(.18,"rgba(255,239,178,.92)");
+    radial.addColorStop(.52,"rgba(135,211,255,.28)");
+    radial.addColorStop(1,"rgba(255,255,255,0)");
+    x.fillStyle=radial;
+    x.fillRect(454,0,58,64);
+    const tex=new THREE.CanvasTexture(c);
+    tex.colorSpace=THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const shootingStarGroup = new THREE.Group();
+  const shootingStars = [];
+  const shootingStarTex = shootingStarTexture();
+  const shootingStarCount = MOBILE ? (LOW_MEMORY ? 2 : 3) : 4;
+  for(let i=0;i<shootingStarCount;i++){
+    const mat=new THREE.SpriteMaterial({
+      map:shootingStarTex,
+      color:i%3===0?0xbbe9ff:0xffe89c,
+      transparent:true,
+      opacity:0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const s=new THREE.Sprite(mat);
+    s.center.set(.86,.5);
+    const baseW=MOBILE?2.5:3.4;
+    s.scale.set(baseW+(i%2)*.7,MOBILE?.16:.19,1);
+    s.material.rotation=-.52+(i%2?-.08:.04);
+    s.renderOrder=3;
+    shootingStarGroup.add(s);
+    shootingStars.push({
+      s,
+      phase:i*(MOBILE?4.7:3.8)+1.2,
+      duration:1.15+(i%3)*.22,
+      period:7.8+i*2.4,
+      y:2.9-(i%4)*1.55,
+      z:-1.5-(i%3)*2.0
+    });
+  }
+  scene.add(shootingStarGroup);
+
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowTexture(), color: 0xffc400, transparent: true,
     blending: THREE.AdditiveBlending, depthWrite: false
@@ -1207,19 +1290,86 @@
   setShapeUI(0,true);
 
   let targetRY=0,targetRX=-.035,ry=0,rx=-.035,drag=false,lastX=0,lastY=0,pinch=0;
-  canvas.addEventListener("pointerdown",e=>{drag=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture?.(e.pointerId)});
-  canvas.addEventListener("pointermove",e=>{if(!drag)return;targetRY+=(e.clientX-lastX)*.0055;targetRX+=(e.clientY-lastY)*.0028;targetRX=THREE.MathUtils.clamp(targetRX,-.34,.3);lastX=e.clientX;lastY=e.clientY});
-  canvas.addEventListener("pointerup",()=>drag=false);
-  canvas.addEventListener("pointercancel",()=>drag=false);
-  canvas.addEventListener("wheel",e=>{e.preventDefault();cameraZTarget=THREE.MathUtils.clamp(cameraZTarget+e.deltaY*.006,MOBILE?9.5:7.3,MOBILE?15.5:14.2)},{passive:false});
-  canvas.addEventListener("touchmove",e=>{
-    if(e.touches.length===2){
-      const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.hypot(dx,dy);
-      if(pinch) cameraZTarget=THREE.MathUtils.clamp(cameraZTarget-(d-pinch)*.014,MOBILE?9.5:7.3,MOBILE?15.5:14.2);
-      pinch=d;
+  const zoomMin=MOBILE?8.55:7.3;
+  const zoomMax=MOBILE?16.8:14.2;
+
+  // Escritorio: arrastrar con puntero y rueda para zoom.
+  if(!MOBILE){
+    canvas.addEventListener("pointerdown",e=>{
+      drag=true;lastX=e.clientX;lastY=e.clientY;
+      canvas.setPointerCapture?.(e.pointerId);
+    });
+    canvas.addEventListener("pointermove",e=>{
+      if(!drag)return;
+      targetRY+=(e.clientX-lastX)*.0055;
+      targetRX+=(e.clientY-lastY)*.0028;
+      targetRX=THREE.MathUtils.clamp(targetRX,-.34,.3);
+      lastX=e.clientX;lastY=e.clientY;
+    });
+    canvas.addEventListener("pointerup",()=>drag=false);
+    canvas.addEventListener("pointercancel",()=>drag=false);
+  }
+
+  canvas.addEventListener("wheel",e=>{
+    e.preventDefault();
+    cameraZTarget=THREE.MathUtils.clamp(cameraZTarget+e.deltaY*.006,zoomMin,zoomMax);
+  },{passive:false});
+
+  // Celular: 1 dedo rota; 2 dedos acercan/alejan. Se evita que el navegador robe el gesto.
+  canvas.addEventListener("touchstart",e=>{
+    if(!MOBILE)return;
+    if(e.touches.length===1){
+      pinch=0;
+      drag=true;
+      lastX=e.touches[0].clientX;
+      lastY=e.touches[0].clientY;
+    }else if(e.touches.length===2){
+      e.preventDefault();
+      drag=false;
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      pinch=Math.hypot(dx,dy);
     }
-  },{passive:true});
-  canvas.addEventListener("touchend",()=>pinch=0,{passive:true});
+  },{passive:false});
+
+  canvas.addEventListener("touchmove",e=>{
+    if(!MOBILE)return;
+    if(e.touches.length===2){
+      e.preventDefault();
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const d=Math.hypot(dx,dy);
+      if(pinch>0){
+        const delta=d-pinch;
+        cameraZTarget=THREE.MathUtils.clamp(cameraZTarget-delta*.026,zoomMin,zoomMax);
+      }
+      pinch=d;
+      drag=false;
+      return;
+    }
+    if(e.touches.length===1 && drag){
+      e.preventDefault();
+      const touch=e.touches[0];
+      targetRY+=(touch.clientX-lastX)*.0052;
+      targetRX+=(touch.clientY-lastY)*.0026;
+      targetRX=THREE.MathUtils.clamp(targetRX,-.34,.3);
+      lastX=touch.clientX;
+      lastY=touch.clientY;
+    }
+  },{passive:false});
+
+  canvas.addEventListener("touchend",e=>{
+    if(!MOBILE)return;
+    pinch=0;
+    if(e.touches.length===1){
+      drag=true;
+      lastX=e.touches[0].clientX;
+      lastY=e.touches[0].clientY;
+    }else{
+      drag=false;
+    }
+  },{passive:false});
+  canvas.addEventListener("touchcancel",()=>{pinch=0;drag=false},{passive:false});
 
   const clock=new THREE.Clock();
   const smooth=t=>t*t*t*(t*(t*6-15)+10);
@@ -1403,6 +1553,34 @@
     farStars.material.opacity=(MOBILE?.48:.52)+(REDUCED_MOTION?0:Math.sin(t*.22)*.055);
     nearStars.material.opacity=(MOBILE?.65:.70)+(REDUCED_MOTION?0:Math.sin(t*.47+1.2)*.075);
     cosmicMotes.material.opacity=(MOBILE?.18:.24)+(REDUCED_MOTION?0:Math.sin(t*.31+2.1)*.055)+transitionEnergy*.06;
+
+    heroStars.forEach((o,i)=>{
+      const twinkle=REDUCED_MOTION?0:Math.sin(t*(1.05+(i%4)*.17)+o.phase);
+      const pulse=1+Math.max(0,twinkle)*.34;
+      o.star.scale.setScalar(o.baseScale*pulse);
+      o.star.material.opacity=.25+Math.max(0,twinkle)*.48+transitionEnergy*.08;
+    });
+
+    shootingStars.forEach((o,i)=>{
+      if(REDUCED_MOTION){o.s.visible=false;return}
+      o.s.visible=true;
+      const cycle=((t+o.phase)%o.period);
+      const u=cycle/o.duration;
+      if(u>=0 && u<=1){
+        const q=u*u*(3-2*u);
+        o.s.material.opacity=Math.sin(Math.PI*u)*(MOBILE?.62:.82);
+        o.s.position.set(
+          (MOBILE?-5.6:-7.4)+q*(MOBILE?11.5:15.2),
+          o.y-q*(MOBILE?5.2:6.8),
+          o.z
+        );
+        const swell=1+Math.sin(Math.PI*u)*.18;
+        o.s.scale.x=(MOBILE?2.5:3.4)+(i%2)*.7;
+        o.s.scale.x*=swell;
+      }else{
+        o.s.material.opacity=0;
+      }
+    });
     glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
     updateFlowTrails(t);
     flowGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.12)*.045;
