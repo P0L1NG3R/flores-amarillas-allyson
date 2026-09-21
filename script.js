@@ -377,53 +377,105 @@
     return new THREE.CanvasTexture(c);
   }
 
-  // Estrellas protagonistas: más grandes, con profundidad y destello lento.
-  const heroStarCount = MOBILE ? (LOW_MEMORY ? 5 : 8) : 14;
+  // Estrellas protagonistas: destellos con forma de estrella, profundidad y pulsación.
+  function sparkleTexture(){
+    const c=document.createElement("canvas");
+    c.width=c.height=256;
+    const x=c.getContext("2d");
+    const core=x.createRadialGradient(128,128,0,128,128,88);
+    core.addColorStop(0,"rgba(255,255,255,1)");
+    core.addColorStop(.08,"rgba(255,246,190,.98)");
+    core.addColorStop(.26,"rgba(255,214,76,.62)");
+    core.addColorStop(.62,"rgba(134,211,255,.16)");
+    core.addColorStop(1,"rgba(255,255,255,0)");
+    x.fillStyle=core;
+    x.fillRect(0,0,256,256);
+
+    const ray=x.createLinearGradient(0,0,256,0);
+    ray.addColorStop(0,"rgba(255,255,255,0)");
+    ray.addColorStop(.44,"rgba(255,231,138,.10)");
+    ray.addColorStop(.495,"rgba(255,255,235,.92)");
+    ray.addColorStop(.505,"rgba(255,255,255,1)");
+    ray.addColorStop(.56,"rgba(255,231,138,.10)");
+    ray.addColorStop(1,"rgba(255,255,255,0)");
+    x.fillStyle=ray;
+    x.fillRect(12,124,232,8);
+    x.save();
+    x.translate(128,128);
+    x.rotate(Math.PI/2);
+    x.translate(-128,-128);
+    x.fillRect(28,125,200,6);
+    x.restore();
+
+    x.save();
+    x.translate(128,128);
+    x.rotate(Math.PI/4);
+    x.translate(-128,-128);
+    x.globalAlpha=.42;
+    x.fillRect(50,126,156,4);
+    x.restore();
+    x.save();
+    x.translate(128,128);
+    x.rotate(-Math.PI/4);
+    x.translate(-128,-128);
+    x.globalAlpha=.32;
+    x.fillRect(58,126,140,3);
+    x.restore();
+
+    const tex=new THREE.CanvasTexture(c);
+    tex.colorSpace=THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const heroStarTexture=sparkleTexture();
+  const heroStarCount = MOBILE ? (LOW_MEMORY ? 10 : 14) : 28;
   const heroStars = [];
   for (let i = 0; i < heroStarCount; i++) {
-    const cool = i % 3 === 0;
+    const cool = i % 4 === 0;
     const mat = new THREE.SpriteMaterial({
-      map: glowTexture(),
-      color: cool ? 0xbdeaff : 0xffed9a,
+      map: heroStarTexture,
+      color: cool ? 0xbdeaff : (i%3===0?0xffd95c:0xfff0ad),
       transparent: true,
-      opacity: 0.34,
+      opacity: 0.42,
       depthWrite: false,
       blending: THREE.AdditiveBlending
     });
     const star = new THREE.Sprite(mat);
-    const a = i / heroStarCount * Math.PI * 2 + i * .73;
-    const r = (MOBILE ? 6.2 : 7.5) + (i % 4) * (MOBILE ? 1.35 : 1.85);
-    const baseScale = (MOBILE ? .19 : .22) + (i % 5) * .038;
+    const a = i / heroStarCount * Math.PI * 2 + i * .91;
+    const r = (MOBILE ? 5.5 : 6.8) + (i % 5) * (MOBILE ? 1.15 : 1.55);
+    const baseScale = (MOBILE ? .22 : .25) + (i % 6) * .045;
     star.position.set(
       Math.cos(a) * r,
-      -3.4 + ((i * 17) % 70) / 10,
-      Math.sin(a) * r * .58 - 3.8
+      -3.6 + ((i * 17) % 78) / 10,
+      Math.sin(a) * r * .60 - 3.1
     );
     star.scale.set(baseScale, baseScale, 1);
-    star.renderOrder = 2;
+    star.renderOrder = 3;
     scene.add(star);
-    heroStars.push({star,baseScale,phase:i*1.37});
+    heroStars.push({star,baseScale,phase:i*1.37,drift:.018+(i%5)*.004});
   }
 
   function shootingStarTexture(){
     const c=document.createElement("canvas");
-    c.width=512;c.height=64;
+    c.width=640;c.height=96;
     const x=c.getContext("2d");
-    const g=x.createLinearGradient(0,0,512,0);
+    const g=x.createLinearGradient(0,0,640,0);
     g.addColorStop(0,"rgba(255,255,255,0)");
-    g.addColorStop(.48,"rgba(160,220,255,.08)");
-    g.addColorStop(.82,"rgba(255,232,154,.42)");
-    g.addColorStop(.965,"rgba(255,250,220,.98)");
+    g.addColorStop(.22,"rgba(116,196,255,.035)");
+    g.addColorStop(.58,"rgba(157,219,255,.14)");
+    g.addColorStop(.83,"rgba(255,222,106,.58)");
+    g.addColorStop(.955,"rgba(255,252,225,1)");
     g.addColorStop(1,"rgba(255,255,255,0)");
     x.fillStyle=g;
-    x.fillRect(0,25,512,14);
-    const radial=x.createRadialGradient(486,32,0,486,32,28);
+    x.fillRect(0,36,640,24);
+    const radial=x.createRadialGradient(602,48,0,602,48,40);
     radial.addColorStop(0,"rgba(255,255,255,1)");
-    radial.addColorStop(.18,"rgba(255,239,178,.92)");
-    radial.addColorStop(.52,"rgba(135,211,255,.28)");
+    radial.addColorStop(.12,"rgba(255,250,211,1)");
+    radial.addColorStop(.34,"rgba(255,221,103,.78)");
+    radial.addColorStop(.62,"rgba(128,207,255,.28)");
     radial.addColorStop(1,"rgba(255,255,255,0)");
     x.fillStyle=radial;
-    x.fillRect(454,0,58,64);
+    x.fillRect(558,4,82,88);
     const tex=new THREE.CanvasTexture(c);
     tex.colorSpace=THREE.SRGBColorSpace;
     return tex;
@@ -432,33 +484,90 @@
   const shootingStarGroup = new THREE.Group();
   const shootingStars = [];
   const shootingStarTex = shootingStarTexture();
-  const shootingStarCount = MOBILE ? (LOW_MEMORY ? 2 : 3) : 4;
+  const shootingStarCount = MOBILE ? (LOW_MEMORY ? 3 : 5) : 7;
   for(let i=0;i<shootingStarCount;i++){
     const mat=new THREE.SpriteMaterial({
       map:shootingStarTex,
-      color:i%3===0?0xbbe9ff:0xffe89c,
+      color:i%3===0?0xbbe9ff:(i%2?0xfff2b0:0xffd85a),
       transparent:true,
       opacity:0,
       depthWrite:false,
       blending:THREE.AdditiveBlending
     });
-    const s=new THREE.Sprite(mat);
-    s.center.set(.86,.5);
-    const baseW=MOBILE?2.5:3.4;
-    s.scale.set(baseW+(i%2)*.7,MOBILE?.16:.19,1);
-    s.material.rotation=-.52+(i%2?-.08:.04);
-    s.renderOrder=3;
-    shootingStarGroup.add(s);
+    const star=new THREE.Sprite(mat);
+    star.center.set(.88,.5);
+    const baseW=MOBILE?3.15:4.35;
+    star.scale.set(baseW+(i%3)*.62,MOBILE?.21:.24,1);
+    star.material.rotation=-.50+(i%3===0?.05:i%3===1?-.07:-.13);
+    star.renderOrder=4;
+    shootingStarGroup.add(star);
     shootingStars.push({
-      s,
-      phase:i*(MOBILE?4.7:3.8)+1.2,
-      duration:1.15+(i%3)*.22,
-      period:7.8+i*2.4,
-      y:2.9-(i%4)*1.55,
-      z:-1.5-(i%3)*2.0
+      s:star,
+      phase:i*(MOBILE?2.95:2.25)+.7,
+      duration:.92+(i%3)*.16,
+      period:5.6+i*1.45,
+      y:3.4-(i%5)*1.42,
+      z:-.8-(i%4)*1.55,
+      baseW
     });
   }
   scene.add(shootingStarGroup);
+
+  // Vía Láctea inferior: espiral amplia de estrellas doradas y azuladas bajo la escena.
+  const milkyWayGroup=new THREE.Group();
+  const milkyWayCount=MOBILE?(LOW_MEMORY?520:860):2300;
+  const milkyPos=new Float32Array(milkyWayCount*3);
+  const milkyCol=new Float32Array(milkyWayCount*3);
+  const milkyPalette=[0xfff2b0,0xffd557,0xbfeaff,0xffffff,0xffbd32];
+  const milkyColor=new THREE.Color();
+  for(let i=0;i<milkyWayCount;i++){
+    const arm=i%4;
+    const r=.18+Math.pow(Math.random(),.72)*(MOBILE?4.65:6.05);
+    const spread=(Math.random()-.5)*(.30+r*.075);
+    const a=arm*Math.PI/2+r*1.36+spread;
+    const coreBias=1-Math.min(1,r/(MOBILE?4.65:6.05));
+    milkyPos[i*3]=Math.cos(a)*r+(Math.random()-.5)*.10;
+    milkyPos[i*3+1]=Math.sin(a)*r*(MOBILE?.35:.31)+(Math.random()-.5)*(.08+r*.014);
+    milkyPos[i*3+2]=(Math.random()-.5)*(.18+r*.045)-coreBias*.12;
+    milkyColor.setHex(milkyPalette[(i+arm)%milkyPalette.length]);
+    const lum=.66+coreBias*.34;
+    milkyCol[i*3]=milkyColor.r*lum;
+    milkyCol[i*3+1]=milkyColor.g*lum;
+    milkyCol[i*3+2]=milkyColor.b*lum;
+  }
+  const milkyGeo=new THREE.BufferGeometry();
+  milkyGeo.setAttribute("position",new THREE.BufferAttribute(milkyPos,3));
+  milkyGeo.setAttribute("color",new THREE.BufferAttribute(milkyCol,3));
+  const milkyMat=new THREE.PointsMaterial({
+    map:glowTexture(),
+    vertexColors:true,
+    size:MOBILE?.060:.052,
+    transparent:true,
+    opacity:MOBILE?.62:.70,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    alphaTest:.012
+  });
+  const milkyWayPoints=new THREE.Points(milkyGeo,milkyMat);
+  milkyWayPoints.renderOrder=1;
+  milkyWayGroup.add(milkyWayPoints);
+
+  const milkyGlow=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:glowTexture(),
+    color:0xffca42,
+    transparent:true,
+    opacity:MOBILE?.075:.095,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  }));
+  milkyGlow.scale.set(MOBILE?6.8:8.9,MOBILE?1.45:1.75,1);
+  milkyGlow.position.z=-.45;
+  milkyWayGroup.add(milkyGlow);
+
+  milkyWayGroup.position.set(0,MOBILE?-2.72:-2.92,-1.55);
+  milkyWayGroup.rotation.x=MOBILE?-.42:-.50;
+  milkyWayGroup.rotation.z=-.14;
+  scene.add(milkyWayGroup);
 
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowTexture(), color: 0xffc400, transparent: true,
@@ -469,7 +578,7 @@
   glow.material.opacity = MOBILE ? 0.095 : 0.11;
   universe.add(glow);
 
-  /* Centro floral: reemplaza por completo el holograma circular. */
+  /* Centro floral principal: convive con hologramas contextuales y el ramo especial. */
   const ambientLight = new THREE.AmbientLight(0xffefc5, MOBILE ? 0.34 : 0.40);
   scene.add(ambientLight);
 
@@ -783,6 +892,122 @@
   holoDust.renderOrder = 30;
   hologramGroup.visible = false;
 
+  // Ramo holográfico especial del cuarto estado visual (índice 3).
+  // Se renderiza como una constelación floral con tallos, envoltura y aura propia.
+  const bouquetHoloGroup=new THREE.Group();
+  bouquetHoloGroup.visible=false;
+  bouquetHoloGroup.position.set(0,-.02,.38);
+  universe.add(bouquetHoloGroup);
+
+  const bouquetHeadLayout=[
+    [-1.08,.72],[-.62,1.18],[-.08,1.42],[.53,1.19],[1.05,.72],[-.38,.57],[.34,.60]
+  ];
+  const bouquetPointCountPerHead=MOBILE?(LOW_MEMORY?24:34):52;
+  const bouquetPointTotal=bouquetHeadLayout.length*bouquetPointCountPerHead;
+  const bouquetPos=new Float32Array(bouquetPointTotal*3);
+  const bouquetCol=new Float32Array(bouquetPointTotal*3);
+  const bouquetColor=new THREE.Color();
+  let bouquetCursor=0;
+  bouquetHeadLayout.forEach((h,hi)=>{
+    for(let j=0;j<bouquetPointCountPerHead;j++){
+      const a=Math.random()*Math.PI*2;
+      const petal=.12+.18*Math.pow(Math.abs(Math.cos(8*a)),.48);
+      const center=j<Math.max(5,Math.floor(bouquetPointCountPerHead*.18));
+      const r=center?Math.sqrt(Math.random())*.115:(.10+Math.random()*petal);
+      const idx=bouquetCursor++;
+      bouquetPos[idx*3]=h[0]+Math.cos(a)*r;
+      bouquetPos[idx*3+1]=h[1]+Math.sin(a)*r;
+      bouquetPos[idx*3+2]=(Math.random()-.5)*.22+(hi%2?.04:-.02);
+      bouquetColor.setHex(center?0x8c5206:(j%4===0?0xfff3a8:j%3===0?0xffbd24:0xffdc4f));
+      bouquetCol[idx*3]=bouquetColor.r;
+      bouquetCol[idx*3+1]=bouquetColor.g;
+      bouquetCol[idx*3+2]=bouquetColor.b;
+    }
+  });
+  const bouquetGeo=new THREE.BufferGeometry();
+  bouquetGeo.setAttribute("position",new THREE.BufferAttribute(bouquetPos,3));
+  bouquetGeo.setAttribute("color",new THREE.BufferAttribute(bouquetCol,3));
+  const bouquetPointMat=new THREE.PointsMaterial({
+    map:glowTexture(),
+    vertexColors:true,
+    size:MOBILE?.095:.082,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    alphaTest:.012
+  });
+  const bouquetHoloPoints=new THREE.Points(bouquetGeo,bouquetPointMat);
+  bouquetHoloPoints.renderOrder=35;
+  bouquetHoloGroup.add(bouquetHoloPoints);
+
+  const bouquetStemVertices=[];
+  bouquetHeadLayout.forEach((h,i)=>{
+    bouquetStemVertices.push(
+      (i-3)*.045,-1.46,-.12,
+      h[0]*.72,h[1]-.13,-.03
+    );
+  });
+  const bouquetStemGeo=new THREE.BufferGeometry();
+  bouquetStemGeo.setAttribute("position",new THREE.Float32BufferAttribute(bouquetStemVertices,3));
+  const bouquetStemMat=new THREE.LineBasicMaterial({
+    color:0xa7edff,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  const bouquetStems=new THREE.LineSegments(bouquetStemGeo,bouquetStemMat);
+  bouquetStems.renderOrder=33;
+  bouquetHoloGroup.add(bouquetStems);
+
+  const bouquetWrapMat=new THREE.MeshBasicMaterial({
+    color:0xffd75a,
+    wireframe:true,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  const bouquetWrap=new THREE.Mesh(
+    new THREE.ConeGeometry(MOBILE?.72:.80,MOBILE?1.28:1.42,12,2,true),
+    bouquetWrapMat
+  );
+  bouquetWrap.position.set(0,-.92,-.08);
+  bouquetWrap.renderOrder=32;
+  bouquetHoloGroup.add(bouquetWrap);
+
+  const bouquetBowMat=new THREE.MeshBasicMaterial({
+    color:0xffefae,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  const bouquetBowL=new THREE.Mesh(new THREE.TorusGeometry(.25,.025,5,26,Math.PI*1.7),bouquetBowMat);
+  const bouquetBowR=new THREE.Mesh(new THREE.TorusGeometry(.25,.025,5,26,Math.PI*1.7),bouquetBowMat.clone());
+  bouquetBowL.scale.set(1.15,.62,1);
+  bouquetBowR.scale.set(1.15,.62,1);
+  bouquetBowL.position.set(-.20,-.43,.09);
+  bouquetBowR.position.set(.20,-.43,.09);
+  bouquetBowL.rotation.z=.34;
+  bouquetBowR.rotation.z=Math.PI-.34;
+  bouquetBowL.renderOrder=bouquetBowR.renderOrder=36;
+  bouquetHoloGroup.add(bouquetBowL,bouquetBowR);
+
+  const bouquetAura=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:glowTexture(),
+    color:0xffc72f,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  }));
+  bouquetAura.position.set(0,.15,-.52);
+  bouquetAura.scale.set(MOBILE?4.5:5.2,MOBILE?4.5:5.2,1);
+  bouquetAura.renderOrder=27;
+  bouquetHoloGroup.add(bouquetAura);
+
   /* Corrientes de luz: profundidad 3D sin anillos ni efecto planeta. */
   const flowGroup = new THREE.Group();
   universe.add(flowGroup);
@@ -1050,9 +1275,9 @@
   const wrapMat = new THREE.MeshPhongMaterial({color:0xf0c84b,emissive:0x6b4500,emissiveIntensity:.14,shininess:90});
 
   const FLOATING_FLOWER_MODELS = [
-    {src:"assets/floating-flower-1.webp",type:"bouquet",visualScale:MOBILE?.43:.54},
-    {src:"assets/floating-flower-2.webp",type:"single",visualScale:MOBILE?.49:.61},
-    {src:"assets/floating-flower-3.webp",type:"cluster",visualScale:MOBILE?.45:.57}
+    {src:"assets/floating-flower-1.webp",type:"bouquet",visualScale:MOBILE?.47:.59},
+    {src:"assets/floating-flower-2.webp",type:"single",visualScale:MOBILE?.52:.64},
+    {src:"assets/floating-flower-3.webp",type:"cluster",visualScale:MOBILE?.50:.65}
   ];
 
   const floatingModelLoader=new THREE.TextureLoader();
@@ -1087,107 +1312,129 @@
       depthTest:true,
       side:THREE.DoubleSide,
       toneMapped:false,
-      opacity:.95
+      opacity:.97
     });
     const card=new THREE.Mesh(floatingModelPlaneGeo,flowerMaterial);
-    const size=model.type==="single" ? 1.46 : model.type==="bouquet" ? 1.61 : 1.56;
+    const size=model.type==="single" ? 1.48 : model.type==="bouquet" ? 1.64 : 1.62;
     card.scale.set(size,size,1);
-    card.position.z=.075;
-    card.renderOrder=10;
+    card.position.z=.11;
+    card.renderOrder=12;
     g.add(card);
 
-    // Capa media: ligera separación y rotación para dar parallax y sensación de volumen.
+    // Doble capa con separación real en Z: al girar parece una pieza suspendida, no una imagen pegada.
     const midMaterial=flowerMaterial.clone();
-    midMaterial.opacity=.16;
+    midMaterial.opacity=.22;
     const midCard=new THREE.Mesh(floatingModelPlaneGeo,midMaterial);
     midCard.scale.set(size*.985,size*.985,1);
-    midCard.position.set((index%2?1:-1)*.022,.014,-.005);
-    midCard.rotation.y=(index%2?1:-1)*.105;
-    midCard.rotation.x=.028;
-    midCard.renderOrder=9;
+    midCard.position.set((index%2?1:-1)*.035,.018,-.015);
+    midCard.rotation.y=(index%2?1:-1)*.15;
+    midCard.rotation.x=.040;
+    midCard.renderOrder=10;
     g.add(midCard);
 
-    // Capa trasera: sombra cromática dorada, muy suave y más separada.
     const depthMaterial=flowerMaterial.clone();
-    depthMaterial.color.setHex(index%3===0?0xffc93d:0xffe071);
-    depthMaterial.opacity=.095;
+    depthMaterial.color.setHex(index%3===0?0xffbf2f:0xffe475);
+    depthMaterial.opacity=.14;
     const depthCard=new THREE.Mesh(floatingModelPlaneGeo,depthMaterial);
-    depthCard.scale.set(size*.955,size*.955,1);
-    depthCard.position.set((index%2?-1:1)*.035,-.016,-.095);
-    depthCard.rotation.y=(index%2?1:-1)*.21;
-    depthCard.rotation.x=-.035;
+    depthCard.scale.set(size*.95,size*.95,1);
+    depthCard.position.set((index%2?-1:1)*.065,-.022,-.16);
+    depthCard.rotation.y=(index%2?1:-1)*.29;
+    depthCard.rotation.x=-.055;
     depthCard.renderOrder=8;
     g.add(depthCard);
 
     const haloMaterial=new THREE.SpriteMaterial({
       map:glowTexture(),
-      color:model.type==="single"?0xffdf72:0xffc93e,
+      color:model.type==="single"?0xffe899:0xffc52c,
       transparent:true,
-      opacity:MOBILE?.070:.095,
+      opacity:MOBILE?.11:.14,
       depthWrite:false,
       blending:THREE.AdditiveBlending
     });
     const halo=new THREE.Sprite(haloMaterial);
-    halo.position.z=-.22;
-    const haloSize=model.type==="single"?1.84:2.08;
+    halo.position.z=-.28;
+    const haloSize=model.type==="single"?2.02:2.28;
     halo.scale.set(haloSize,haloSize,1);
     halo.renderOrder=6;
     g.add(halo);
 
     const rimMaterial=new THREE.SpriteMaterial({
       map:glowTexture(),
-      color:index%3===0?0x9fdfff:0xffefaa,
+      color:index%3===0?0xa7e6ff:0xfff0ae,
       transparent:true,
-      opacity:MOBILE?.026:.040,
+      opacity:MOBILE?.055:.075,
       depthWrite:false,
       blending:THREE.AdditiveBlending
     });
     const rim=new THREE.Sprite(rimMaterial);
-    rim.position.set((index%2?-.12:.12),.10,-.12);
-    rim.scale.set(haloSize*.72,haloSize*.72,1);
-    rim.renderOrder=7;
+    rim.position.set((index%2?-.15:.15),.13,-.11);
+    rim.scale.set(haloSize*.77,haloSize*.77,1);
+    rim.renderOrder=9;
     g.add(rim);
+
+    // Dos/tres chispas locales orbitan cada flor para que el conjunto nunca quede estático.
+    const sparkCount=MOBILE?2:3;
+    const sparks=[];
+    for(let j=0;j<sparkCount;j++){
+      const sm=new THREE.SpriteMaterial({
+        map:heroStarTexture,
+        color:j%2?0xbfeaff:0xfff0a8,
+        transparent:true,
+        opacity:0,
+        depthWrite:false,
+        blending:THREE.AdditiveBlending
+      });
+      const sp=new THREE.Sprite(sm);
+      const orbit=.66+j*.18;
+      const ang=j/sparkCount*Math.PI*2+index*.71;
+      sp.position.set(Math.cos(ang)*orbit,Math.sin(ang)*orbit*.72,.19+j*.025);
+      const sc=(MOBILE?.085:.10)+j*.018;
+      sp.scale.set(sc,sc,1);
+      sp.renderOrder=13;
+      g.add(sp);
+      sparks.push({s:sp,orbit,phase:ang,base:sc});
+    }
 
     g.userData.modelType=model.type;
     g.userData.modelIndex=modelIndex%FLOATING_FLOWER_MODELS.length;
     g.userData.visualScale=model.visualScale;
-    g.userData.layers={card,midCard,depthCard,halo,rim};
+    g.userData.layers={card,midCard,depthCard,halo,rim,sparks};
     g.userData.fadeMaterials=[
-      {material:flowerMaterial,base:.95},
-      {material:midMaterial,base:.16},
-      {material:depthMaterial,base:.095},
-      {material:haloMaterial,base:MOBILE?.070:.095},
-      {material:rimMaterial,base:MOBILE?.026:.040}
+      {material:flowerMaterial,base:.97},
+      {material:midMaterial,base:.22},
+      {material:depthMaterial,base:.14},
+      {material:haloMaterial,base:MOBILE?.11:.14},
+      {material:rimMaterial,base:MOBILE?.055:.075}
     ];
     return g;
   }
 
-  // Mantiene el universo floral rico, pero despeja una zona de seguridad alrededor del centro.
-  const floatingCount=MOBILE?(LOW_MEMORY?10:12):18;
+  // Universo floral con varias profundidades: mantiene el centro libre, pero rodeado de movimiento.
+  const floatingCount=MOBILE?(LOW_MEMORY?11:14):20;
   for(let i=0;i<floatingCount;i++){
     const modelIndex=i%FLOATING_FLOWER_MODELS.length;
     const g=makeFloatingBloom(modelIndex,i);
     const type=g.userData.modelType;
     const a=((i+.45)/floatingCount)*Math.PI*2+.22;
-    const r=(MOBILE?3.60:3.95)+(i%4)*(MOBILE?.42:.58);
-    const y=-1.78+(i%7)*(MOBILE?.54:.59);
-    const front=i%6===0?(MOBILE?.10:.16):0;
-    const baseScale=g.userData.visualScale+(i%3)*.014;
+    const r=(MOBILE?3.48:3.82)+(i%5)*(MOBILE?.42:.55);
+    const y=-1.92+(i%8)*(MOBILE?.51:.56);
+    const front=i%5===0?(MOBILE?.20:.28):0;
+    const baseScale=g.userData.visualScale+(i%4)*.018;
 
-    g.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.58-.34+front);
+    g.position.set(Math.cos(a)*r,y,Math.sin(a)*r*.61-.40+front);
     g.scale.setScalar(baseScale);
     flowerGroup.add(g);
 
     floatingFlowers.push({
       g,y,baseX:g.position.x,baseZ:g.position.z,baseScale,
       modelType:type,modelIndex,
-      phase:i*.83,speed:.11+(i%4)*.018,
-      tilt:(i%2?1:-1)*(.030+(i%3)*.010)
+      phase:i*.83,speed:.30+(i%5)*.035,
+      tilt:(i%2?1:-1)*(.038+(i%4)*.012)
     });
   }
 
   /* Polen luminoso sutil alrededor de fotos y flores. */
-  const pollenCount=MOBILE?(LOW_MEMORY?70:105):210;
+  const pollenCount=MOBILE?(LOW_MEMORY?95:135):260;
   const pollenPos=new Float32Array(pollenCount*3);
   for(let i=0;i<pollenCount;i++){
     const a=Math.random()*Math.PI*2;
@@ -1531,6 +1778,9 @@
     const flowerVisibility=
       shapeIndex===0 ? 1-transitionQ :
       nextShape===0 ? transitionQ : 0;
+    const bouquetVisibility=
+      shapeIndex===3 ? 1-transitionQ :
+      nextShape===3 ? transitionQ : 0;
 
     // La flor abre y respira; durante el morph sus petalos parecen soltarse hacia las particulas.
     const bloomBreath=REDUCED_MOTION?1:1+Math.sin(t*1.25)*0.018;
@@ -1614,6 +1864,26 @@
       o.s.material.opacity=holoAlpha*(.30+Math.max(0,Math.sin(t*.92+o.phase))*.36);
     });
 
+    const bouquetAlpha=THREE.MathUtils.clamp(bouquetVisibility*(.82+(REDUCED_MOTION?0:(Math.sin(t*1.65)+1)*.09)),0,1);
+    bouquetHoloGroup.visible=bouquetAlpha>.012;
+    if(bouquetHoloGroup.visible){
+      const bouquetPulse=1+(REDUCED_MOTION?0:Math.sin(t*1.18)*.025);
+      bouquetHoloGroup.position.y=-.02+(REDUCED_MOTION?0:Math.sin(t*.76)*.038);
+      bouquetHoloGroup.rotation.z=REDUCED_MOTION?0:Math.sin(t*.39)*.028;
+      bouquetHoloGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.31)*.075;
+      bouquetHoloGroup.scale.setScalar((MOBILE?.96:1.04)*bouquetPulse);
+      bouquetPointMat.opacity=bouquetAlpha*(MOBILE?.82:.91);
+      bouquetPointMat.size=(MOBILE?.095:.082)*(1+(REDUCED_MOTION?0:Math.max(0,Math.sin(t*2.05))*.20));
+      bouquetStemMat.opacity=bouquetAlpha*(MOBILE?.46:.58);
+      bouquetWrapMat.opacity=bouquetAlpha*(MOBILE?.26:.34);
+      bouquetBowL.material.opacity=bouquetAlpha*(MOBILE?.52:.68);
+      bouquetBowR.material.opacity=bouquetAlpha*(MOBILE?.52:.68);
+      bouquetAura.material.opacity=bouquetAlpha*(MOBILE?.16:.21);
+      const auraScale=(MOBILE?4.5:5.2)*(1+(REDUCED_MOTION?0:Math.sin(t*.88)*.055));
+      bouquetAura.scale.set(auraScale,auraScale,1);
+      bouquetHoloPoints.rotation.z=REDUCED_MOTION?0:t*.016;
+    }
+
     bloomLight.intensity += (transitionEnergy*.52 + entryEnergy*.31 + finaleEnergy*.20 + holoAlpha*.10);
 
     const stormEnergy = REDUCED_MOTION
@@ -1661,10 +1931,14 @@
     cosmicMotes.material.opacity=(MOBILE?.18:.24)+(REDUCED_MOTION?0:Math.sin(t*.31+2.1)*.055)+transitionEnergy*.06;
 
     heroStars.forEach((o,i)=>{
-      const twinkle=REDUCED_MOTION?0:Math.sin(t*(1.05+(i%4)*.17)+o.phase);
-      const pulse=1+Math.max(0,twinkle)*.34;
+      const twinkle=REDUCED_MOTION?0:Math.sin(t*(1.35+(i%5)*.21)+o.phase);
+      const flash=Math.pow(Math.max(0,twinkle),2.2);
+      const pulse=1+flash*.72;
       o.star.scale.setScalar(o.baseScale*pulse);
-      o.star.material.opacity=.25+Math.max(0,twinkle)*.48+transitionEnergy*.08;
+      o.star.material.opacity=.30+flash*.68+transitionEnergy*.12+finaleEnergy*.08;
+      if(!REDUCED_MOTION){
+        o.star.position.y+=Math.sin(t*o.drift+o.phase)*.0009;
+      }
     });
 
     shootingStars.forEach((o,i)=>{
@@ -1674,72 +1948,98 @@
       const u=cycle/o.duration;
       if(u>=0 && u<=1){
         const q=u*u*(3-2*u);
-        o.s.material.opacity=Math.sin(Math.PI*u)*(MOBILE?.62:.82);
+        const flare=Math.sin(Math.PI*u);
+        o.s.material.opacity=Math.pow(flare,.72)*(MOBILE?.82:.98);
         o.s.position.set(
-          (MOBILE?-5.6:-7.4)+q*(MOBILE?11.5:15.2),
-          o.y-q*(MOBILE?5.2:6.8),
+          (MOBILE?-6.1:-8.4)+q*(MOBILE?12.6:17.0),
+          o.y-q*(MOBILE?5.8:7.7)+Math.sin(u*Math.PI)*.32,
           o.z
         );
-        const swell=1+Math.sin(Math.PI*u)*.18;
-        o.s.scale.x=(MOBILE?2.5:3.4)+(i%2)*.7;
-        o.s.scale.x*=swell;
+        const swell=1+flare*.34;
+        o.s.scale.x=o.baseW*swell;
+        o.s.scale.y=(MOBILE?.21:.24)*(1+flare*.22);
       }else{
         o.s.material.opacity=0;
       }
     });
+
+    if(!REDUCED_MOTION){
+      milkyWayGroup.rotation.z=-.14+t*.038;
+      milkyWayGroup.rotation.y=Math.sin(t*.13)*.075;
+      milkyWayGroup.position.x=Math.sin(t*.10)*.09;
+    }
+    milkyWayPoints.material.opacity=(MOBILE?.58:.66)+(REDUCED_MOTION?0:Math.sin(t*.46)*.055)+transitionEnergy*.12+finaleEnergy*.08;
+    milkyGlow.material.opacity=(MOBILE?.060:.080)+(REDUCED_MOTION?0:(Math.sin(t*.58)+1)*.020)+transitionEnergy*.045;
+    const milkyPulse=1+(REDUCED_MOTION?0:Math.sin(t*.33)*.022);
+    milkyWayGroup.scale.setScalar(milkyPulse);
+
     glow.scale.setScalar((MOBILE?6.2:6.8)+(REDUCED_MOTION?0:Math.sin(t*.8)*.14));
     updateFlowTrails(t);
     flowGroup.rotation.y=REDUCED_MOTION?0:Math.sin(t*.12)*.045;
 
     if(secretPulse>0) secretPulse*=.91;
     floatingFlowers.forEach(o=>{
-      const lift=REDUCED_MOTION?0:Math.sin(t*o.speed+o.phase)*.085;
-      const sway=REDUCED_MOTION?0:Math.sin(t*.10+o.phase)*.055;
-      const depth=REDUCED_MOTION?0:Math.cos(t*.085+o.phase)*.045;
+      const lift=REDUCED_MOTION?0:Math.sin(t*o.speed+o.phase)*.17;
+      const sway=REDUCED_MOTION?0:Math.sin(t*(o.speed*.72)+o.phase)*.13;
+      const depth=REDUCED_MOTION?0:Math.cos(t*(o.speed*.63)+o.phase)*.15;
       o.g.position.y=o.y+lift;
       o.g.position.x=o.baseX+sway;
       o.g.position.z=o.baseZ+depth;
 
-      // Mantiene las flores legibles, pero evita que crucen agresivamente el foco central.
-      const flowerYaw=REDUCED_MOTION?0:Math.sin(t*.19+o.phase)*.115;
-      const flowerPitch=REDUCED_MOTION?0:Math.cos(t*.16+o.phase)*.070;
+      const flowerYaw=REDUCED_MOTION?0:Math.sin(t*.34+o.phase)*.18;
+      const flowerPitch=REDUCED_MOTION?0:Math.cos(t*.29+o.phase)*.11;
       o.g.rotation.y=-ry+flowerYaw;
       o.g.rotation.x=-rx+flowerPitch;
-      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.23+o.phase)*.060);
+      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.39+o.phase)*.095);
 
       const layers=o.g.userData.layers;
       if(layers){
-        const parallax=REDUCED_MOTION?0:Math.sin(t*.38+o.phase);
-        layers.card.position.z=.075+parallax*.018;
-        layers.midCard.position.x=(o.modelIndex%2?1:-1)*.022+parallax*.018;
-        layers.midCard.position.z=-.005-parallax*.018;
-        layers.midCard.rotation.y=(o.modelIndex%2?1:-1)*(.105+parallax*.025);
-        layers.depthCard.position.x=(o.modelIndex%2?-1:1)*.035-parallax*.022;
-        layers.depthCard.position.z=-.095-parallax*.032;
-        layers.depthCard.rotation.y=(o.modelIndex%2?1:-1)*(.21-parallax*.035);
-        const glowPulse=1+(REDUCED_MOTION?0:Math.sin(t*.72+o.phase)*.075);
-        layers.halo.scale.setScalar((o.modelType==="single"?1.84:2.08)*glowPulse);
-        layers.rim.scale.setScalar((o.modelType==="single"?1.84:2.08)*.72*(1+(REDUCED_MOTION?0:Math.cos(t*.57+o.phase)*.10)));
-        layers.rim.position.x=(o.modelIndex%2?-.12:.12)+parallax*.035;
-        layers.rim.position.y=.10+Math.cos(t*.42+o.phase)*.028;
+        const parallax=REDUCED_MOTION?0:Math.sin(t*.72+o.phase);
+        layers.card.position.z=.11+parallax*.035;
+        layers.midCard.position.x=(o.modelIndex%2?1:-1)*.035+parallax*.032;
+        layers.midCard.position.z=-.015-parallax*.035;
+        layers.midCard.rotation.y=(o.modelIndex%2?1:-1)*(.15+parallax*.045);
+        layers.depthCard.position.x=(o.modelIndex%2?-1:1)*.065-parallax*.042;
+        layers.depthCard.position.z=-.16-parallax*.055;
+        layers.depthCard.rotation.y=(o.modelIndex%2?1:-1)*(.29-parallax*.060);
+        const glowPulse=1+(REDUCED_MOTION?0:Math.sin(t*1.08+o.phase)*.13);
+        const haloBase=o.modelType==="single"?2.02:2.28;
+        layers.halo.scale.setScalar(haloBase*glowPulse);
+        layers.rim.scale.setScalar(haloBase*.77*(1+(REDUCED_MOTION?0:Math.cos(t*.92+o.phase)*.15)));
+        layers.rim.position.x=(o.modelIndex%2?-.15:.15)+parallax*.065;
+        layers.rim.position.y=.13+Math.cos(t*.78+o.phase)*.055;
+
+        layers.sparks?.forEach((spark,j)=>{
+          const ang=spark.phase+t*(.44+j*.11)*(j%2?1:-1);
+          spark.s.position.x=Math.cos(ang)*spark.orbit;
+          spark.s.position.y=Math.sin(ang)*spark.orbit*.72;
+          spark.s.position.z=.20+Math.sin(t*.66+spark.phase)*.08;
+          const flash=REDUCED_MOTION?.45:Math.pow(Math.max(0,Math.sin(t*(1.55+j*.23)+spark.phase)),1.5);
+          const sc=spark.base*(.82+flash*.72);
+          spark.s.scale.set(sc,sc,1);
+        });
       }
 
       const focusDist=Math.hypot(o.g.position.x,o.g.position.y*.62);
-      const safeRadius=MOBILE?2.58:3.10;
+      const safeRadius=MOBILE?2.55:3.06;
       const focusMask=THREE.MathUtils.clamp(1-focusDist/safeRadius,0,1);
       const frontness=THREE.MathUtils.clamp((o.g.position.z+.20)/1.05,0,1);
-      const hideFactor=focusMask*(.42+.58*frontness);
-      o.g.position.z-=hideFactor*(MOBILE?.72:1.02);
+      const hideFactor=focusMask*(.38+.62*frontness);
+      o.g.position.z-=hideFactor*(MOBILE?.68:.96);
 
-      const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.31+o.phase)*.022))*(secretPulse>0?1+secretPulse*.17:1);
-      const protectedScale=1-hideFactor*.31;
+      const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.62+o.phase)*.045))*(secretPulse>0?1+secretPulse*.17:1);
+      const protectedScale=1-hideFactor*.27;
       o.g.scale.setScalar(o.baseScale*pulse*protectedScale);
       o.g.userData.fadeMaterials?.forEach((entry,mi)=>{
-        const shimmer=REDUCED_MOTION?1:1+Math.sin(t*(.58+mi*.04)+o.phase+mi)*(.025+mi*.008);
-        entry.material.opacity=entry.base*(1-hideFactor*.74)*shimmer;
+        const shimmer=REDUCED_MOTION?1:1+Math.sin(t*(.92+mi*.07)+o.phase+mi)*(.045+mi*.010);
+        entry.material.opacity=entry.base*(1-hideFactor*.72)*shimmer;
+      });
+      layers?.sparks?.forEach((spark,j)=>{
+        const flash=REDUCED_MOTION?.36:Math.pow(Math.max(0,Math.sin(t*(1.6+j*.19)+spark.phase)),1.35);
+        spark.s.material.opacity=(MOBILE?.19:.26)*(.18+flash*.92)*(1-hideFactor*.84);
       });
     });
-    pollen.rotation.y=REDUCED_MOTION?0:t*.012;
+    pollen.rotation.y=REDUCED_MOTION?0:t*.018;
     pollen.position.y=REDUCED_MOTION?0:Math.sin(t*.27)*.04;
     phraseData.forEach(o=>{
       o.s.position.y=o.y+Math.sin(t*.42+o.phase)*.045;
