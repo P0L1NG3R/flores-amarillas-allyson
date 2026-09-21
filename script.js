@@ -634,16 +634,74 @@
     blending: THREE.AdditiveBlending
   });
 
-  const holoPetalCount = MOBILE ? 12 : 18;
-  for (let i = 0; i < holoPetalCount; i++) {
-    const a = i / holoPetalCount * Math.PI * 2;
-    const p = new THREE.Mesh(petalGeo, holoPetalMaterial);
-    p.scale.set(MOBILE ? 0.52 : 0.58, MOBILE ? 0.72 : 0.82, 0.9);
-    p.position.set(Math.cos(a) * (MOBILE ? 0.61 : 0.69), Math.sin(a) * (MOBILE ? 0.61 : 0.69), 0.02);
-    p.rotation.z = a - Math.PI / 2;
-    p.rotation.x = 0.24 + Math.sin(a) * 0.08;
-    hologramGroup.add(p);
+  // Mandala/ramo holográfico: tres coronas de pétalos con distinta profundidad.
+  const holoPetals=[];
+  function addHoloPetalRing(count,radius,sx,sy,z,offset,tilt){
+    for(let i=0;i<count;i++){
+      const a=i/count*Math.PI*2+offset;
+      const p=new THREE.Mesh(petalGeo,holoPetalMaterial);
+      p.scale.set(sx,sy,.9);
+      p.position.set(Math.cos(a)*radius,Math.sin(a)*radius,z);
+      p.rotation.z=a-Math.PI/2;
+      p.rotation.x=tilt+Math.sin(a)*.09;
+      p.rotation.y=Math.cos(a)*.045;
+      p.userData.holoAngle=a;
+      p.userData.holoRadius=radius;
+      p.userData.holoZ=z;
+      p.userData.holoPhase=i*.61+offset;
+      p.userData.holoTilt=tilt;
+      hologramGroup.add(p);
+      holoPetals.push(p);
+    }
   }
+  addHoloPetalRing(MOBILE?13:18,MOBILE?.86:.98,MOBILE?.42:.47,MOBILE?.64:.72,-.045,0,.34);
+  addHoloPetalRing(MOBILE?10:14,MOBILE?.60:.69,MOBILE?.36:.41,MOBILE?.54:.60,.030,Math.PI/(MOBILE?10:14),.25);
+  addHoloPetalRing(MOBILE?7:9,MOBILE?.37:.42,MOBILE?.29:.33,MOBILE?.43:.48,.095,Math.PI/9,.17);
+
+  // Tallos holográficos: convierten la flor circular en una silueta de pequeño ramo.
+  const holoStemMaterial=new THREE.LineBasicMaterial({
+    color:0x9de8ff,
+    transparent:true,
+    opacity:0,
+    blending:THREE.AdditiveBlending,
+    depthWrite:false
+  });
+  const holoStems=[];
+  const stemTargets=[
+    [-.62,.36,.01],[-.31,.66,.02],[0,.79,.04],[.34,.64,.02],[.64,.34,.01]
+  ];
+  stemTargets.forEach((target,i)=>{
+    const points=[
+      new THREE.Vector3((i-2)*.035,-1.12,-.08),
+      new THREE.Vector3(target[0]*.45,-.35,-.03),
+      new THREE.Vector3(target[0],target[1],target[2])
+    ];
+    const geo=new THREE.BufferGeometry().setFromPoints(points);
+    const line=new THREE.Line(geo,holoStemMaterial);
+    line.renderOrder=28;
+    hologramGroup.add(line);
+    holoStems.push(line);
+  });
+
+  // Pequeñas flores satélite que dan la lectura de ramo/constelación floral.
+  const holoSatelliteMaterial=new THREE.SpriteMaterial({
+    map:glowTexture(),
+    color:0xffe57a,
+    transparent:true,
+    opacity:0,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  const holoSatellites=[];
+  stemTargets.forEach((target,i)=>{
+    const s=new THREE.Sprite(holoSatelliteMaterial.clone());
+    s.position.set(target[0],target[1],.06+i*.008);
+    const sc=(MOBILE?.22:.25)+(i%2)*.035;
+    s.scale.set(sc,sc,1);
+    s.renderOrder=31;
+    hologramGroup.add(s);
+    holoSatellites.push({s,base:sc,phase:i*1.17});
+  });
 
   const holoCenterMaterial = new THREE.MeshBasicMaterial({
     color:0xffc73d, wireframe:false, transparent:true, opacity:0,
@@ -1029,47 +1087,77 @@
       depthTest:true,
       side:THREE.DoubleSide,
       toneMapped:false,
-      opacity:.94
+      opacity:.95
     });
     const card=new THREE.Mesh(floatingModelPlaneGeo,flowerMaterial);
     const size=model.type==="single" ? 1.46 : model.type==="bouquet" ? 1.61 : 1.56;
     card.scale.set(size,size,1);
-    card.position.z=.035;
-    card.renderOrder=8;
+    card.position.z=.075;
+    card.renderOrder=10;
     g.add(card);
 
-    // Una lámina secundaria muy suave conserva sensación de volumen sin duplicar visualmente la flor.
+    // Capa media: ligera separación y rotación para dar parallax y sensación de volumen.
+    const midMaterial=flowerMaterial.clone();
+    midMaterial.opacity=.16;
+    const midCard=new THREE.Mesh(floatingModelPlaneGeo,midMaterial);
+    midCard.scale.set(size*.985,size*.985,1);
+    midCard.position.set((index%2?1:-1)*.022,.014,-.005);
+    midCard.rotation.y=(index%2?1:-1)*.105;
+    midCard.rotation.x=.028;
+    midCard.renderOrder=9;
+    g.add(midCard);
+
+    // Capa trasera: sombra cromática dorada, muy suave y más separada.
     const depthMaterial=flowerMaterial.clone();
-    depthMaterial.opacity=.075;
+    depthMaterial.color.setHex(index%3===0?0xffc93d:0xffe071);
+    depthMaterial.opacity=.095;
     const depthCard=new THREE.Mesh(floatingModelPlaneGeo,depthMaterial);
-    depthCard.scale.set(size*.965,size*.965,1);
-    depthCard.position.z=-.045;
-    depthCard.rotation.y=(index%2?1:-1)*.15;
-    depthCard.renderOrder=7;
+    depthCard.scale.set(size*.955,size*.955,1);
+    depthCard.position.set((index%2?-1:1)*.035,-.016,-.095);
+    depthCard.rotation.y=(index%2?1:-1)*.21;
+    depthCard.rotation.x=-.035;
+    depthCard.renderOrder=8;
     g.add(depthCard);
 
     const haloMaterial=new THREE.SpriteMaterial({
       map:glowTexture(),
-      color:model.type==="single"?0xffd85d:0xffcc3e,
+      color:model.type==="single"?0xffdf72:0xffc93e,
       transparent:true,
-      opacity:MOBILE?.050:.072,
+      opacity:MOBILE?.070:.095,
       depthWrite:false,
       blending:THREE.AdditiveBlending
     });
     const halo=new THREE.Sprite(haloMaterial);
-    halo.position.z=-.18;
-    const haloSize=model.type==="single"?1.72:1.92;
+    halo.position.z=-.22;
+    const haloSize=model.type==="single"?1.84:2.08;
     halo.scale.set(haloSize,haloSize,1);
     halo.renderOrder=6;
     g.add(halo);
 
+    const rimMaterial=new THREE.SpriteMaterial({
+      map:glowTexture(),
+      color:index%3===0?0x9fdfff:0xffefaa,
+      transparent:true,
+      opacity:MOBILE?.026:.040,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const rim=new THREE.Sprite(rimMaterial);
+    rim.position.set((index%2?-.12:.12),.10,-.12);
+    rim.scale.set(haloSize*.72,haloSize*.72,1);
+    rim.renderOrder=7;
+    g.add(rim);
+
     g.userData.modelType=model.type;
     g.userData.modelIndex=modelIndex%FLOATING_FLOWER_MODELS.length;
     g.userData.visualScale=model.visualScale;
+    g.userData.layers={card,midCard,depthCard,halo,rim};
     g.userData.fadeMaterials=[
-      {material:flowerMaterial,base:.94},
-      {material:depthMaterial,base:.075},
-      {material:haloMaterial,base:MOBILE?.050:.072}
+      {material:flowerMaterial,base:.95},
+      {material:midMaterial,base:.16},
+      {material:depthMaterial,base:.095},
+      {material:haloMaterial,base:MOBILE?.070:.095},
+      {material:rimMaterial,base:MOBILE?.026:.040}
     ];
     return g;
   }
@@ -1508,6 +1596,24 @@
     holoDust.rotation.y = t*.24;
     holoDust.rotation.x = Math.sin(t*.31)*.11;
 
+    holoPetals.forEach((p,i)=>{
+      const a=p.userData.holoAngle;
+      const breathe=REDUCED_MOTION?0:Math.sin(t*(.52+(i%5)*.025)+p.userData.holoPhase);
+      const radial=p.userData.holoRadius*(1+breathe*.035+transitionEnergy*.045);
+      p.position.x=Math.cos(a+t*.020*(i%2?1:-1))*radial;
+      p.position.y=Math.sin(a+t*.020*(i%2?1:-1))*radial;
+      p.position.z=p.userData.holoZ+breathe*.028;
+      p.rotation.z=a-Math.PI/2+t*.018*(i%2?1:-1);
+      p.rotation.x=p.userData.holoTilt+Math.sin(a)*.09+breathe*.035;
+      p.rotation.y=Math.cos(a)*.045+Math.sin(t*.41+p.userData.holoPhase)*.045;
+    });
+    holoStemMaterial.opacity=holoAlpha*.32;
+    holoSatellites.forEach((o,i)=>{
+      const pulse=1+(REDUCED_MOTION?0:Math.sin(t*(1.1+i*.08)+o.phase)*.20);
+      o.s.scale.setScalar(o.base*pulse);
+      o.s.material.opacity=holoAlpha*(.30+Math.max(0,Math.sin(t*.92+o.phase))*.36);
+    });
+
     bloomLight.intensity += (transitionEnergy*.52 + entryEnergy*.31 + finaleEnergy*.20 + holoAlpha*.10);
 
     const stormEnergy = REDUCED_MOTION
@@ -1595,9 +1701,28 @@
       o.g.position.z=o.baseZ+depth;
 
       // Mantiene las flores legibles, pero evita que crucen agresivamente el foco central.
-      o.g.rotation.y=-ry+(REDUCED_MOTION?0:Math.sin(t*.13+o.phase)*.07);
-      o.g.rotation.x=-rx+(REDUCED_MOTION?0:Math.cos(t*.11+o.phase)*.040);
-      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.17+o.phase)*.038);
+      const flowerYaw=REDUCED_MOTION?0:Math.sin(t*.19+o.phase)*.115;
+      const flowerPitch=REDUCED_MOTION?0:Math.cos(t*.16+o.phase)*.070;
+      o.g.rotation.y=-ry+flowerYaw;
+      o.g.rotation.x=-rx+flowerPitch;
+      o.g.rotation.z=o.tilt+(REDUCED_MOTION?0:Math.sin(t*.23+o.phase)*.060);
+
+      const layers=o.g.userData.layers;
+      if(layers){
+        const parallax=REDUCED_MOTION?0:Math.sin(t*.38+o.phase);
+        layers.card.position.z=.075+parallax*.018;
+        layers.midCard.position.x=(o.modelIndex%2?1:-1)*.022+parallax*.018;
+        layers.midCard.position.z=-.005-parallax*.018;
+        layers.midCard.rotation.y=(o.modelIndex%2?1:-1)*(.105+parallax*.025);
+        layers.depthCard.position.x=(o.modelIndex%2?-1:1)*.035-parallax*.022;
+        layers.depthCard.position.z=-.095-parallax*.032;
+        layers.depthCard.rotation.y=(o.modelIndex%2?1:-1)*(.21-parallax*.035);
+        const glowPulse=1+(REDUCED_MOTION?0:Math.sin(t*.72+o.phase)*.075);
+        layers.halo.scale.setScalar((o.modelType==="single"?1.84:2.08)*glowPulse);
+        layers.rim.scale.setScalar((o.modelType==="single"?1.84:2.08)*.72*(1+(REDUCED_MOTION?0:Math.cos(t*.57+o.phase)*.10)));
+        layers.rim.position.x=(o.modelIndex%2?-.12:.12)+parallax*.035;
+        layers.rim.position.y=.10+Math.cos(t*.42+o.phase)*.028;
+      }
 
       const focusDist=Math.hypot(o.g.position.x,o.g.position.y*.62);
       const safeRadius=MOBILE?2.58:3.10;
@@ -1609,8 +1734,9 @@
       const pulse=(1+(REDUCED_MOTION?0:Math.sin(t*.31+o.phase)*.022))*(secretPulse>0?1+secretPulse*.17:1);
       const protectedScale=1-hideFactor*.31;
       o.g.scale.setScalar(o.baseScale*pulse*protectedScale);
-      o.g.userData.fadeMaterials?.forEach(entry=>{
-        entry.material.opacity=entry.base*(1-hideFactor*.74);
+      o.g.userData.fadeMaterials?.forEach((entry,mi)=>{
+        const shimmer=REDUCED_MOTION?1:1+Math.sin(t*(.58+mi*.04)+o.phase+mi)*(.025+mi*.008);
+        entry.material.opacity=entry.base*(1-hideFactor*.74)*shimmer;
       });
     });
     pollen.rotation.y=REDUCED_MOTION?0:t*.012;
